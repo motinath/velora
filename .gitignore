@@ -1,0 +1,41 @@
+# Python virtual environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Next.js and Node build outputs
+node_modules/
+.next/
+dist/
+build/
+out/
+.docusaurus/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# Local database and assets storage
+*.db
+*.db-journal
+backend/velora.db
+storage/
+.env
+.env.local
+.env.production
+.env.development
+
+# System / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.gemini/
+.agents/
