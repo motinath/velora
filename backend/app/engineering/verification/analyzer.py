@@ -125,7 +125,8 @@ class EngineeringAnalyzer:
         timing_metrics = self.calculate_delay_and_frequency(graph, topology_type, vdd, optimization)
         
         drc_status = constraint_results.get("status", "PASSED")
-        sim_status = "PASSED" if sim_results.get("waveforms", {}).get("t", []) else "FAILED"
+        waveforms = sim_results.get("waveforms", {})
+        sim_status = "PASSED" if (waveforms.get("t", []) or waveforms.get("x", [])) else "FAILED"
         
         # Compute scores (0-100)
         rtl_score = 98 if drc_status == "PASSED" else 75

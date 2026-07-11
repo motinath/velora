@@ -21,6 +21,7 @@ class CompilationContext:
         self.sim_results: Dict[str, Any] = {}
         self.explanation: str = ""
         self.readiness_report: Dict[str, Any] = {}
+        self.gds_data: Optional[bytes] = None
 
     def log(self, msg: str):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]

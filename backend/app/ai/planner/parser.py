@@ -217,6 +217,36 @@ class RequirementParser:
         if freq is not None:
             params["frequency"] = freq
 
+        # --- Target constraints (for feedback loops) ---
+        # Delay: e.g. "delay < 30ps" or "delay under 50 ps"
+        m_delay = re.search(r'delay\s*(?:<|under|less than|<=)\s*([0-9]+(?:\.[0-9]+)?)\s*ps', prompt_lower)
+        if m_delay:
+            params["target_delay_ps"] = float(m_delay.group(1))
+
+        # Power: e.g. "power < 100uw" or "power under 10 uW" or "leakage < 15nw"
+        m_power = re.search(r'(?:power|leakage)\s*(?:<|under|less than|<=)\s*([0-9]+(?:\.[0-9]+)?)\s*(u|n|m)w', prompt_lower)
+        if m_power:
+            val = float(m_power.group(1))
+            unit = m_power.group(2).lower()
+            if unit == 'u':
+                params["target_power_uw"] = val
+            elif unit == 'n':
+                params["target_power_uw"] = val * 1e-3
+            elif unit == 'm':
+                params["target_power_uw"] = val * 1000.0
+
+        # Area: e.g. "area < 5um2" or "area under 10 um^2"
+        m_area = re.search(r'area\s*(?:<|under|less than|<=)\s*([0-9]+(?:\.[0-9]+)?)\s*(?:um2|um\^2|square\s*microns?)', prompt_lower)
+        if m_area:
+            params["target_area_um2"] = float(m_area.group(1))
+
+        # Frequency: e.g. "frequency > 2ghz" or "speed > 500mhz" or "frequency over 1.5 ghz"
+        m_freq = re.search(r'(?:frequency|speed)\s*(?:>|over|greater than|>=)\s*([0-9]+(?:\.[0-9]+)?)\s*(m|g)hz', prompt_lower)
+        if m_freq:
+            val = float(m_freq.group(1))
+            unit = m_freq.group(2).lower()
+            params["target_frequency_mhz"] = val if unit == 'm' else val * 1000.0
+
         return params
 
     # ------------------------------------------------------------------

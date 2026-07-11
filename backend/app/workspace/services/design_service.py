@@ -123,6 +123,7 @@ class DesignService:
         # ----------------------------------------------------------------
         # 4. Sync files to workspace state engine
         # ----------------------------------------------------------------
+        design.gds_data = getattr(ctx, "gds_data", None)
         from app.workspace.services.state_manager import state_manager
         state_manager.sync_files_to_state(db, design)
 

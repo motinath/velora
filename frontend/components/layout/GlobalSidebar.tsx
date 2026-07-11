@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  ChevronDown, 
   ChevronRight, 
   Home, 
   FolderKanban, 
@@ -41,53 +40,20 @@ interface GlobalSidebarProps {
   activeProject: any;
 }
 
-function WorkspaceSwitcher({ 
-  selected, 
-  onSelect 
-}: { 
-  selected: string; 
-  onSelect: (ws: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
+function VeloraLogo() {
   return (
-    <div className="relative">
-      <div 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-2.5 py-2 mb-4 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors select-none group border border-slate-200 bg-slate-55"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-[6px] bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[13px] shadow-sm">
-            {selected.charAt(0)}
-          </div>
-          <div className="flex flex-col overflow-hidden">
-            <span className="text-[13px] font-bold leading-none mb-1 text-slate-800 truncate max-w-[120px]">{selected}</span>
-            <span className="text-[10px] text-primary font-sans font-bold leading-none uppercase tracking-wider">Pro Edition</span>
-          </div>
-        </div>
-        <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" strokeWidth={1.5} />
+    <div className="flex items-center gap-3 px-3 py-2 mb-2 select-none">
+      <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 border border-blue-400/20">
+        <Cpu className="w-5 h-5 animate-pulse" style={{ animationDuration: '3s' }} />
       </div>
-
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-[52px] left-0 w-full bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
-            {['Acme Semiconductor', 'Personal Workspace', 'Client Sandbox'].map(ws => (
-              <div 
-                key={ws}
-                onClick={() => { onSelect(ws); setIsOpen(false); }}
-                className={`px-3 py-2 mx-1 text-xs rounded-md cursor-pointer transition-colors ${selected === ws ? 'bg-primary/10 text-primary font-bold' : 'text-slate-700 hover:bg-slate-50'}`}
-              >
-                {ws}
-              </div>
-            ))}
-            <div className="h-px bg-slate-200 my-1 mx-2" />
-            <div className="px-3 py-2 mx-1 text-xs text-slate-500 hover:bg-slate-50 rounded-md cursor-pointer flex items-center gap-2 transition-colors">
-              <span className="text-sm leading-none mb-0.5">+</span> Create Workspace
-            </div>
-          </div>
-        </>
-      )}
+      <div className="flex flex-col">
+        <span className="text-[17px] font-black tracking-tight leading-none text-slate-850 font-sans bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600">
+          VELORA
+        </span>
+        <span className="text-[9px] text-slate-400 font-sans font-bold leading-none uppercase tracking-widest mt-1">
+          AI Chip Copilot
+        </span>
+      </div>
     </div>
   );
 }
@@ -226,7 +192,7 @@ export function GlobalSidebar({
       }`}
     >
       <div className="flex-1 flex flex-col gap-4 mt-2 overflow-hidden">
-        <WorkspaceSwitcher selected={activeWorkspace} onSelect={onSelectWorkspace} />
+        <VeloraLogo />
 
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex flex-col gap-4">
           {navGroups.map((group, idx) => (

@@ -66,7 +66,241 @@ class SimulationManager:
         return ""
 
     def _execute_ngspice(self, exe, netlist, topology, parameters):
-        raise NotImplementedError("SKY130 PDK library path not configured in local environment.")
+        import subprocess
+        import re
+        import tempfile
+
+        vdd = parameters.get("vdd", 1.8)
+        current = parameters.get("current", 10e-6)
+
+        # 1. Parse subcircuit name and ports from netlist
+        m = re.search(r'\.subckt\s+(\S+)\s+(.+)', netlist)
+        if not m:
+            raise ValueError("Could not parse subcircuit name and ports from netlist")
+        subckt_name = m.group(1)
+        ports = m.group(2).strip().split()
+
+        # 2. Build subcircuit models for ideal FETs to bypass PDK file dependencies
+        ideal_models = """
+* Ideal BSIM models to bypass PDK library path checks in simulation
+.subckt sky130_fd_pr__nfet_01v8 d g s b W=0.36u L=0.15u mult=1
+M1 d g s b nchannel W={W} L={L} M={mult}
+.ends
+
+.subckt sky130_fd_pr__pfet_01v8_hvt d g s b W=0.36u L=0.15u mult=1
+M1 d g s b pchannel W={W} L={L} M={mult}
+.ends
+
+.subckt sky130_fd_pr__pfet_01v8 d g s b W=0.36u L=0.15u mult=1
+M1 d g s b pchannel W={W} L={L} M={mult}
+.ends
+
+.model nchannel nmos level=1 vt0=0.7 kp=120u
+.model pchannel pmos level=1 vt0=-0.7 kp=40u
+"""
+
+        # Clean netlist from the PDK model include statement to use our ideal models
+        cleaned_netlist = re.sub(r'\.include\s+.*sky130\.lib\.spice\s+\w+', '', netlist)
+
+        # 3. Choose simulation commands and stimulations based on topology/analysis type
+        from app.engineering.topology.registry import topology_registry
+        tpl = topology_registry.get(topology)
+        sim = tpl.get("simulation", {}) if tpl else {}
+        analysis_type = sim.get("analysis_type", "transient")
+
+        inst_ports = []
+        stimulus = []
+        analysis_cmd = ""
+
+        # Build node instantiations
+        for p in ports:
+            p_upper = p.upper()
+            if p_upper in ("VDD", "VDDP"):
+                inst_ports.append("VDD")
+            elif p_upper in ("GND", "VSS", "VSSB", "VNB"):
+                inst_ports.append("0")
+            else:
+                inst_ports.append(p)
+
+        # Subcircuit instantiation
+        inst_line = f"Xtop " + " ".join(inst_ports) + f" {subckt_name}"
+
+        # Default supplies
+        stimulus.append(f"VVDD VDD 0 DC {vdd}")
+        stimulus.append("VGND 0 0 DC 0")
+
+        if analysis_type == "transient":
+            # Add inputs pulses
+            for p in ports:
+                p_upper = p.upper()
+                if p_upper in ("IN", "A"):
+                    stimulus.append(f"VIN IN 0 PULSE(0 {vdd} 0.5n 0.1n 0.1n 4n 8n)")
+                elif p_upper in ("B", "D"):
+                    stimulus.append(f"VIND D 0 PULSE(0 {vdd} 1.5n 0.1n 0.1n 4n 8n)")
+                elif p_upper in ("CLK", "EN"):
+                    stimulus.append(f"VCLK CLK 0 PULSE(0 {vdd} 0.2n 0.1n 0.1n 2n 4n)")
+                elif p_upper in ("WL", "RWL"):
+                    stimulus.append(f"VWL WL 0 PULSE(0 {vdd} 1n 0.1n 0.1n 3n 6n)")
+                elif p_upper in ("BL", "RBL"):
+                    stimulus.append(f"VBL BL 0 DC {vdd}")
+                elif p_upper in ("BLB", "RBLB"):
+                    stimulus.append(f"VBLB BLB 0 DC {vdd}")
+
+            # command
+            analysis_cmd = ".tran 0.1n 12n"
+
+        elif analysis_type == "dc_sweep":
+            # Sweep VDS for current mirror
+            for p in ports:
+                p_upper = p.upper()
+                if "OUT" in p_upper:
+                    stimulus.append("VOUT OUT 0 DC 0")
+                if "REF" in p_upper:
+                    stimulus.append(f"IREF 0 REF DC {current}")
+            analysis_cmd = ".dc VOUT 0 1.8 0.02"
+
+        elif analysis_type == "dc_transfer":
+            # Sweep differential input
+            for p in ports:
+                p_upper = p.upper()
+                if "IN_P" in p_upper or "INP" in p_upper:
+                    stimulus.append("VINP IN_P 0 DC 0.9")
+                elif "IN_M" in p_upper or "INM" in p_upper:
+                    stimulus.append("VINM IN_M 0 DC 0.9")
+            # Apply differential source
+            stimulus.append("Vid IN_P IN_M DC 0")
+            analysis_cmd = ".dc Vid -1.0 1.0 0.02"
+
+        else: # operating point / generic
+            analysis_cmd = ".op"
+
+        # 4. Generate whole deck
+        control_block = f"""
+.control
+set filetype=ascii
+run
+write temp_sim_out.raw
+quit
+.endc
+"""
+
+        deck = f"""* VELORA ngspice execution deck
+{ideal_models}
+{cleaned_netlist}
+{inst_line}
+{" ".join(stimulus)}
+{analysis_cmd}
+{control_block}
+.end
+"""
+
+        # 5. Run simulation
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sp_path = os.path.join(tmpdir, "deck.sp")
+            raw_path = os.path.join(tmpdir, "out.raw")
+
+            # replace write statement with temp path
+            deck = deck.replace("temp_sim_out.raw", raw_path.replace("\\", "/"))
+
+            with open(sp_path, "w", encoding="utf-8") as f:
+                f.write(deck)
+
+            logger.info(f"[SimulationManager] Invoking ngspice: {exe} -b -r {raw_path} {sp_path}")
+            subprocess.run([exe, "-b", "-r", raw_path, sp_path], capture_output=True, text=True, check=True)
+
+            if not os.path.exists(raw_path):
+                raise FileNotFoundError("Simulation output raw file not generated.")
+
+            # 6. Parse raw file
+            waveforms = {}
+            variables = []
+            num_vars = 0
+            num_pts = 0
+
+            with open(raw_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+            idx = 0
+            n_lines = len(lines)
+            while idx < n_lines:
+                line = lines[idx].strip()
+                if line.startswith("No. Variables:"):
+                    num_vars = int(line.split(":")[1].strip())
+                elif line.startswith("No. Points:"):
+                    num_pts = int(line.split(":")[1].strip())
+                elif line.startswith("Variables:"):
+                    idx += 1
+                    for _ in range(num_vars):
+                        var_line = lines[idx].strip().split()
+                        if len(var_line) >= 2:
+                            variables.append(var_line[1])
+                        idx += 1
+                    continue
+                elif line.startswith("Values:"):
+                    idx += 1
+                    waveforms["x"] = []
+                    for var in variables[1:]:
+                        clean_name = var.lower()
+                        if clean_name.startswith("v("):
+                            clean_name = "y_" + clean_name[2:-1].upper()
+                        elif clean_name.startswith("i("):
+                            clean_name = "y_" + clean_name[2:-1].upper()
+                        else:
+                            clean_name = "y_" + clean_name.upper()
+                        waveforms[clean_name] = []
+
+                    for _ in range(num_pts):
+                        if idx >= n_lines:
+                            break
+                        val_line = lines[idx].strip().split()
+                        if len(val_line) >= 2:
+                            x_val = float(val_line[1])
+                            waveforms["x"].append(x_val)
+                            idx += 1
+                            for v_idx in range(1, num_vars):
+                                if idx >= n_lines:
+                                    break
+                                y_val = float(lines[idx].strip())
+                                var_name = variables[v_idx]
+                                clean_name = var_name.lower()
+                                if clean_name.startswith("v("):
+                                    clean_name = "y_" + clean_name[2:-1].upper()
+                                elif clean_name.startswith("i("):
+                                    clean_name = "y_" + clean_name[2:-1].upper()
+                                else:
+                                    clean_name = "y_" + clean_name.upper()
+                                waveforms[clean_name].append(y_val)
+                                idx += 1
+                    break
+                idx += 1
+
+        # 7. Formulate default metrics
+        metrics = {
+            "Simulator Used": "Ngspice (Ideal Models)",
+            "Supply Voltage": f"{vdd} V",
+            "Operating Temp": "27 C"
+        }
+
+        # Calculate actual metrics if waveforms exist
+        if analysis_type == "transient":
+            if "y_IN" in waveforms and "y_OUT" in waveforms and "x" in waveforms:
+                x_pts = waveforms["x"]
+                y_in = waveforms["y_IN"]
+                y_out = waveforms["y_OUT"]
+                in_cross = []
+                out_cross = []
+                half_vdd = vdd / 2.0
+                for i in range(1, len(x_pts)):
+                    if (y_in[i-1] <= half_vdd < y_in[i]) or (y_in[i-1] >= half_vdd > y_in[i]):
+                        in_cross.append(x_pts[i])
+                    if (y_out[i-1] <= half_vdd < y_out[i]) or (y_out[i-1] >= half_vdd > y_out[i]):
+                        out_cross.append(x_pts[i])
+                if in_cross and out_cross:
+                    delay_ps = abs(out_cross[0] - in_cross[0]) * 1e12
+                    metrics["Propagation Delay (t_pd)"] = f"{delay_ps:.1f} ps"
+                    metrics["Estimated Frequency"] = f"{1.0 / (2 * delay_ps * 1e-12 * 1e-6):.2f} MHz"
+
+        return {"status": "SUCCESS", "waveforms": waveforms, "metrics": metrics}
 
     # ------------------------------------------------------------------
     # Registry-driven fallback dispatcher

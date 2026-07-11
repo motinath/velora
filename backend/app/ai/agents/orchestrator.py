@@ -246,98 +246,184 @@ class MultiAgentOrchestrator:
             ctx.log(f"[KNOWLEDGE AGENT] Fallback: matched legacy template '{legacy_tpl.get('name')}'")
 
         # ----------------------------------------------------------------
-        # 3. Architecture & RTL Agents: topology selection + sizing
-        #    Both are now fully handled by design_planner.plan() below.
+        # Iterative Sizing and Simulation loop (Up to 3 iterations)
         # ----------------------------------------------------------------
-        self.architecture_agent.run_task(
-            ctx, "Determining core topology and design decisions.", use_llm=False
-        )
-        self.rtl_agent.run_task(
-            ctx, "Sizing transistors dynamically using optimization profiles.", use_llm=False
-        )
+        max_iters = 3
+        sizing_overrides = {}
 
-        # Single, unified planning call — registry-driven, no branching
-        ctx.plan = design_planner.plan(ctx.reqs)
-        ctx.log(
-            f"[RTL AGENT] Registry planner produced "
-            f"{len(ctx.plan['components'])} components, "
-            f"{len(ctx.plan['connections'])} connections."
-        )
+        for iteration in range(1, max_iters + 1):
+            ctx.log(f"--- Sizing & Simulation Loop: Iteration {iteration} ---")
+            ctx.reqs["sizing_overrides"] = sizing_overrides
+
+            # ----------------------------------------------------------------
+            # 3. Architecture & RTL Agents: topology selection + sizing
+            # ----------------------------------------------------------------
+            self.architecture_agent.run_task(
+                ctx, f"Determining core topology and design decisions (Iteration {iteration}).", use_llm=False
+            )
+            self.rtl_agent.run_task(
+                ctx, f"Sizing transistors dynamically using optimization profiles (Iteration {iteration}).", use_llm=False
+            )
+
+            # Single, unified planning call — registry-driven, no branching
+            ctx.plan = design_planner.plan(ctx.reqs)
+            ctx.log(
+                f"[RTL AGENT] Registry planner produced "
+                f"{len(ctx.plan['components'])} components, "
+                f"{len(ctx.plan['connections'])} connections."
+            )
+
+            # ----------------------------------------------------------------
+            # 4. Schematic Agent: build circuit graph + render + netlist
+            # ----------------------------------------------------------------
+            self.schematic_agent.run_task(
+                ctx, f"Assembling electrical connections and rendering SVG schematic (Iteration {iteration}).", use_llm=False
+            )
+            ctx.graph = connection_engine.build_graph(
+                ctx.plan["components"],
+                ctx.plan["connections"],
+            )
+            ctx.schematic = schematic_renderer.render(
+                ctx.graph,
+                topology_type=ctx.reqs.get("type"),   # registry-driven layout lookup
+            )
+            ctx.netlist = netlist_generator.generate(
+                ctx.graph,
+                design_name=ctx.reqs.get("type", "Generic Subcircuit"),
+            )
+
+            # ----------------------------------------------------------------
+            # 5. Verification, Timing, Power Agents
+            # ----------------------------------------------------------------
+            self.verification_agent.run_task(
+                ctx, f"Verifying floating gates, connections, and DRC bounds (Iteration {iteration}).", use_llm=False
+            )
+            ctx.constraint_results = constraint_checker.check(ctx.graph, ctx.plan["constraints"])
+
+            self.timing_agent.run_task(
+                ctx, f"Calculating delay parameters and gate switching timing paths (Iteration {iteration}).", use_llm=False
+            )
+            self.power_agent.run_task(
+                ctx, f"Calculating static leakage paths and active dynamic power (Iteration {iteration}).", use_llm=False
+            )
+
+            # ----------------------------------------------------------------
+            # 6. Simulation Agent
+            # ----------------------------------------------------------------
+            self.simulation_agent.run_task(
+                ctx, f"Configuring SPICE stimulus and running transient waveforms (Iteration {iteration}).", use_llm=False
+            )
+            ctx.sim_results = simulation_manager.run_simulation(
+                ctx.netlist,
+                ctx.reqs.get("type", ""),
+                ctx.reqs.get("parameters", {}),
+                ctx.reqs.get("optimization") or "default",
+            )
+
+            # ----------------------------------------------------------------
+            # 7. Critic & Reviewer Agents
+            # ----------------------------------------------------------------
+            self.critic_agent.run_task(
+                ctx, f"Verifying channel widths and layout aspect ratios (Iteration {iteration}).", use_llm=False
+            )
+            self.reviewer_agent.run_task(
+                ctx, f"Double checking logic connectivity vs raw SPICE parameters (Iteration {iteration}).", use_llm=False
+            )
+
+            # ----------------------------------------------------------------
+            # 8. Report Agent: readiness scores + explanation
+            # ----------------------------------------------------------------
+            self.report_agent.run_task(
+                ctx, f"Compiling Engineering Readiness Report (Iteration {iteration}).", use_llm=False
+            )
+
+            from app.engineering.verification.analyzer import engineering_analyzer
+            ctx.readiness_report = engineering_analyzer.generate_readiness_report(
+                graph=ctx.graph,
+                constraint_results=ctx.constraint_results,
+                sim_results=ctx.sim_results,
+                topology_type=ctx.reqs.get("type", ""),
+                optimization=ctx.reqs.get("optimization") or "default",
+                vdd=ctx.reqs.get("parameters", {}).get("vdd", 1.8),
+            )
+            ctx.explanation = ctx.plan.get("explanation", "")
+
+            # Evaluate targets vs actuals to see if loop should continue
+            params = ctx.reqs.get("parameters", {})
+            violations = []
+
+            if "target_delay_ps" in params:
+                target = params["target_delay_ps"]
+                actual = ctx.readiness_report.get("stage_delay_ps", 0.0)
+                if actual > target:
+                    violations.append(f"Delay target violated: actual {actual} ps > target {target} ps")
+
+            if "target_power_uw" in params:
+                target = params["target_power_uw"]
+                actual = ctx.readiness_report.get("active_power_uw", 0.0) + ctx.readiness_report.get("static_power_uw", 0.0)
+                if actual > target:
+                    violations.append(f"Power target violated: actual {actual} uW > target {target} uW")
+
+            if "target_area_um2" in params:
+                target = params["target_area_um2"]
+                actual = ctx.readiness_report.get("area_um2", 0.0)
+                if actual > target:
+                    violations.append(f"Area target violated: actual {actual} um^2 > target {target} um^2")
+
+            if "target_frequency_mhz" in params:
+                target = params["target_frequency_mhz"]
+                actual = ctx.readiness_report.get("max_frequency_mhz", 0.0)
+                if actual < target:
+                    violations.append(f"Frequency target violated: actual {actual} MHz < target {target} MHz")
+
+            if not violations:
+                ctx.log(f"[CRITIC AGENT] All target constraints met on iteration {iteration}.")
+                break
+            else:
+                ctx.log(f"[CRITIC AGENT] Violations on iteration {iteration}: {', '.join(violations)}")
+                if iteration == max_iters:
+                    ctx.log("[CRITIC AGENT] Maximum synthesis iterations reached. Finalizing design.")
+                    break
+
+                # Apply scale adjustments to the optimization variables
+                tpl = topology_registry.get(ctx.reqs.get("type", ""))
+                _, opt_profile = design_planner._resolve_optimization(tpl, ctx.reqs.get("optimization"))
+
+                curr_wp = sizing_overrides.get("w_p") or opt_profile.get("w_p", 0.5)
+                curr_wn = sizing_overrides.get("w_n") or opt_profile.get("w_n", 0.3)
+                curr_l  = sizing_overrides.get("l_val") or opt_profile.get("l_val", 0.15)
+
+                speed_up = any("Delay" in v or "Frequency" in v for v in violations)
+                scale_down = any("Power" in v or "Area" in v for v in violations)
+
+                if speed_up and scale_down:
+                    curr_wp = round(curr_wp * 1.1, 3)
+                    curr_wn = round(curr_wn * 1.1, 3)
+                elif speed_up:
+                    curr_wp = round(curr_wp * 1.25, 3)
+                    curr_wn = round(curr_wn * 1.25, 3)
+                    if curr_l > 0.15:
+                        curr_l = round(max(0.15, curr_l - 0.05), 3)
+                elif scale_down:
+                    curr_wp = round(max(0.15, curr_wp * 0.8), 3)
+                    curr_wn = round(max(0.15, curr_wn * 0.8), 3)
+                    curr_l  = round(curr_l * 1.15, 3)
+
+                sizing_overrides = {"w_p": curr_wp, "w_n": curr_wn, "l_val": curr_l}
+                ctx.log(f"[CRITIC AGENT] Feedback: Adjusting transistor sizes for next run -> {sizing_overrides}")
 
         # ----------------------------------------------------------------
-        # 4. Schematic Agent: build circuit graph + render + netlist
+        # 9. GDSII Layout Auto-Generation
         # ----------------------------------------------------------------
-        self.schematic_agent.run_task(
-            ctx, "Assembling electrical connections and rendering SVG schematic.", use_llm=False
-        )
-        ctx.graph = connection_engine.build_graph(
-            ctx.plan["components"],
-            ctx.plan["connections"],
-        )
-        ctx.schematic = schematic_renderer.render(
-            ctx.graph,
-            topology_type=ctx.reqs.get("type"),   # registry-driven layout lookup
-        )
-        ctx.netlist = netlist_generator.generate(
-            ctx.graph,
-            design_name=ctx.reqs.get("type", "Generic Subcircuit"),
-        )
-
-        # ----------------------------------------------------------------
-        # 5. Verification, Timing, Power Agents
-        # ----------------------------------------------------------------
-        self.verification_agent.run_task(
-            ctx, "Verifying floating gates, connections, and DRC bounds.", use_llm=False
-        )
-        ctx.constraint_results = constraint_checker.check(ctx.graph, ctx.plan["constraints"])
-
-        self.timing_agent.run_task(
-            ctx, "Calculating delay parameters and gate switching timing paths.", use_llm=False
-        )
-        self.power_agent.run_task(
-            ctx, "Calculating static leakage paths and active dynamic power.", use_llm=False
-        )
-
-        # ----------------------------------------------------------------
-        # 6. Simulation Agent
-        # ----------------------------------------------------------------
-        self.simulation_agent.run_task(
-            ctx, "Configuring SPICE stimulus and running transient waveforms.", use_llm=False
-        )
-        ctx.sim_results = simulation_manager.run_simulation(
-            ctx.netlist,
-            ctx.reqs.get("type", ""),
-            ctx.reqs.get("parameters", {}),
-            ctx.reqs.get("optimization") or "default",
-        )
-
-        # ----------------------------------------------------------------
-        # 7. Critic & Reviewer Agents
-        # ----------------------------------------------------------------
-        self.critic_agent.run_task(
-            ctx, "Verifying channel widths and layout aspect ratios.", use_llm=False
-        )
-        self.reviewer_agent.run_task(
-            ctx, "Double checking logic connectivity vs raw SPICE parameters.", use_llm=False
-        )
-
-        # ----------------------------------------------------------------
-        # 8. Report Agent: readiness scores + explanation
-        # ----------------------------------------------------------------
-        self.report_agent.run_task(
-            ctx, "Compiling final Engineering Readiness Report.", use_llm=False
-        )
-
-        from app.engineering.verification.analyzer import engineering_analyzer
-        ctx.readiness_report = engineering_analyzer.generate_readiness_report(
-            graph=ctx.graph,
-            constraint_results=ctx.constraint_results,
-            sim_results=ctx.sim_results,
-            topology_type=ctx.reqs.get("type", ""),
-            optimization=ctx.reqs.get("optimization") or "default",
-            vdd=ctx.reqs.get("parameters", {}).get("vdd", 1.8),
-        )
-        ctx.explanation = ctx.plan.get("explanation", "")
+        from app.engineering.layout.gds_generator import gds_generator
+        ctx.log("[SCHEMATIC AGENT] Compiling physical layout placement and routing into GDSII...")
+        try:
+            gds_data = gds_generator.generate_gds(ctx.graph, ctx.reqs.get("type", ""))
+            ctx.gds_data = gds_data
+            ctx.log(f"[SCHEMATIC AGENT] GDSII binary compiled successfully ({len(gds_data)} bytes).")
+        except Exception as layout_err:
+            ctx.log(f"[WARNING] GDSII layout generation failed: {layout_err}")
+            ctx.gds_data = None
 
         # LLM enrichment (optional — skipped in mock mode)
         if settings.MODEL_PROVIDER != "mock":

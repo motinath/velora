@@ -217,6 +217,12 @@ class DesignPlanner:
         # 2. Resolve optimization profile
         # ----------------------------------------------------------------
         opt_label, opt_profile = self._resolve_optimization(tpl, optimization)
+        # Deep-copy and apply sizing overrides from requirements (Critic feedback loop)
+        opt_profile = dict(opt_profile)
+        overrides = requirements.get("sizing_overrides", {})
+        if overrides:
+            logger.info(f"[DesignPlanner] Applying Critic sizing overrides: {overrides}")
+            opt_profile.update(overrides)
 
         # ----------------------------------------------------------------
         # 3. Build component list and connections

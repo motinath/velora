@@ -46,6 +46,38 @@ class EngineeringStateManager:
                     version=design.version
                 )
                 db.add(new_file)
+
+        # Sync layout GDSII binary file to disk and record file in database
+        gds_data = getattr(design, "gds_data", None)
+        if gds_data:
+            proj_dir = f"storage/projects/{design.project_id}"
+            os.makedirs(proj_dir, exist_ok=True)
+            gds_path = f"{proj_dir}/layout_placement.gds"
+            try:
+                with open(gds_path, "wb") as f:
+                    f.write(gds_data)
+                
+                db_file = db.query(File).filter(
+                    File.project_id == design.project_id,
+                    File.filename == "layout_placement.gds"
+                ).first()
+                
+                content_desc = f"[GDSII binary stream - {len(gds_data)} bytes saved on disk]"
+                if db_file:
+                    db_file.content = content_desc
+                    db_file.version = design.version
+                else:
+                    new_file = File(
+                        project_id=design.project_id,
+                        filename="layout_placement.gds",
+                        type="rtl",
+                        path=gds_path,
+                        content=content_desc,
+                        version=design.version
+                    )
+                    db.add(new_file)
+            except Exception:
+                pass
         
         db.commit()
 

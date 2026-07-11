@@ -105,6 +105,10 @@ class SchematicRenderer:
         # Fill in any component not covered by the layout data
         coords = self._fill_missing(components, coords, width, height)
 
+        # Self-heal missing wires for static layout definitions
+        if layout_data and layout_data.get("component_positions"):
+            wires = self._heal_static_wires(components, graph, coords, wires)
+
         # ------------------------------------------------------------------
         # 2. Build nodes_layout list
         # ------------------------------------------------------------------
@@ -440,6 +444,97 @@ class SchematicRenderer:
                 '    <line x1="0" y1="15" x2="0" y2="25" stroke="#0f172a" stroke-width="2" />',
                 f'   <text x="15" y="5" fill="#64748b" font-size="10" font-family="monospace">{cid}</text>',
             ]
+
+    def _heal_static_wires(
+        self,
+        components: List[Dict],
+        graph: CircuitGraph,
+        coords: Dict[str, Tuple[int, int]],
+        wires: List[Dict],
+    ) -> List[Dict]:
+        """
+        Calculates exact terminal coordinates for all pins of all components in the graph.
+        If any terminal is not connected to a wire segment of its corresponding net,
+        routes a Manhattan wire to the closest segment or node on that net.
+        """
+        healed_wires = list(wires)
+
+        comp_types = {comp["id"]: comp["category"] for comp in components}
+
+        pin_offsets = {
+            "PMOS": {"G": (-20, 0), "S": (0, -15), "D": (0, 15), "B": (10, 0)},
+            "NMOS": {"G": (-20, 0), "S": (10, 15), "D": (10, -15), "B": (10, 0)},
+            "VDD":  {"VDD": (0, 20)},
+            "GND":  {"GND": (0, -10)},
+            "PIN":  {"IO": (0, 0)},
+        }
+
+        net_terminals = {}
+        for e in graph.edges:
+            net  = e.get("to_net", "")
+            node = e.get("from_node", "")
+            pin  = e.get("from_pin", "")
+            if not net or not node or node not in coords:
+                continue
+
+            cx, cy = coords[node]
+            cat    = comp_types.get(node, "PIN")
+            
+            offset_dict  = pin_offsets.get(cat, pin_offsets["PIN"])
+            off_x, off_y = offset_dict.get(pin, (0, 0))
+            
+            tx = cx + off_x
+            ty = cy + off_y
+            
+            net_terminals.setdefault(net, []).append((tx, ty))
+
+        for net, terminals in net_terminals.items():
+            net_wires = [w for w in healed_wires if w.get("net") == net]
+
+            if not net_wires:
+                for k in range(len(terminals) - 1):
+                    tx1, ty1 = terminals[k]
+                    tx2, ty2 = terminals[k + 1]
+                    if tx1 == tx2 or ty1 == ty2:
+                        healed_wires.append({"x1": tx1, "y1": ty1, "x2": tx2, "y2": ty2, "net": net})
+                    else:
+                        healed_wires.append({"x1": tx1, "y1": ty1, "x2": tx2, "y2": ty1, "net": net})
+                        healed_wires.append({"x1": tx2, "y1": ty1, "x2": tx2, "y2": ty2, "net": net})
+                continue
+
+            for tx, ty in terminals:
+                min_dist = float("inf")
+                closest_pt = None
+
+                for w in net_wires:
+                    x1, y1 = w["x1"], w["y1"]
+                    x2, y2 = w["x2"], w["y2"]
+
+                    dx = x2 - x1
+                    dy = y2 - y1
+                    if dx == 0 and dy == 0:
+                        t = 0.0
+                    else:
+                        t = ((tx - x1) * dx + (ty - y1) * dy) / (dx * dx + dy * dy)
+                        t = max(0.0, min(1.0, t))
+
+                    cx_val = x1 + t * dx
+                    cy_val = y1 + t * dy
+                    dist   = math.sqrt((tx - cx_val) ** 2 + (ty - cy_val) ** 2)
+
+                    if dist < min_dist:
+                        min_dist   = dist
+                        closest_pt = (int(cx_val), int(cy_val))
+
+                if min_dist > 5 and closest_pt:
+                    cx_val, cy_val = closest_pt
+                    if tx == cx_val or ty == cy_val:
+                        healed_wires.append({"x1": tx, "y1": ty, "x2": cx_val, "y2": cy_val, "net": net})
+                    else:
+                        healed_wires.append({"x1": tx, "y1": ty, "x2": cx_val, "y2": ty, "net": net})
+                        healed_wires.append({"x1": cx_val, "y1": ty, "x2": cx_val, "y2": cy_val, "net": net})
+
+        return healed_wires
 
     # ------------------------------------------------------------------
     # Helper
