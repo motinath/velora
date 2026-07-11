@@ -1,0 +1,33 @@
+{
+  "name": "DDR_Controller",
+  "pins": [
+    "CLK",
+    "DQ_BUS",
+    "DQS_BUS",
+    "ADDR_BUS"
+  ],
+  "parameters": {
+    "ddr_gen": 4
+  },
+  "model": "sky130_fd_sc_hd__ddrctrl",
+  "category": "Complex IP",
+  "desc": " Curated DDR_Controller component optimized for open PDK runs.",
+  "symbol_svg": "",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "ddr_gen",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Complex IP block compiled for local simulation."
+  }
+}

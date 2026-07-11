@@ -1,0 +1,35 @@
+{
+  "name": "Decoder2x4",
+  "pins": [
+    "A0",
+    "A1",
+    "Y0",
+    "Y1",
+    "Y2",
+    "Y3"
+  ],
+  "parameters": {
+    "delay_ps": 35
+  },
+  "model": "sky130_fd_sc_hd__dec2x4",
+  "category": "Digital Logic",
+  "desc": " Curated Decoder2x4 component optimized for open PDK runs.",
+  "symbol_svg": "<rect x='10' y='10' width='30' height='40' />",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "delay_ps",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Digital Logic block compiled for local simulation."
+  }
+}

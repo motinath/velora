@@ -1,0 +1,32 @@
+{
+  "name": "Power_Gate",
+  "pins": [
+    "VDD_IN",
+    "VDD_OUT",
+    "SLEEP"
+  ],
+  "parameters": {
+    "ron_mohm": 200
+  },
+  "model": "sky130_fd_sc_hd__pwr_gate",
+  "category": "Power",
+  "desc": " Curated Power_Gate component optimized for open PDK runs.",
+  "symbol_svg": "",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "ron_mohm",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Power block compiled for local simulation."
+  }
+}

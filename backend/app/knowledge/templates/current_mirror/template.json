@@ -1,0 +1,44 @@
+{
+  "design_type": "Current Mirror",
+  "name": "Current Mirror analog reference bias circuit",
+  "description": "2-transistor basic current mirror utilizing matched gate voltages to duplicate bias currents",
+  "optimizations": {
+    "Low Leakage": {
+      "w_val": 2.0,
+      "l_val": 1.0,
+      "reasoning": "Increased channel dimensions to minimize drain-source subthreshold leakage currents."
+    },
+    "High Precision": {
+      "w_val": 4.0,
+      "l_val": 2.0,
+      "reasoning": "Extended length and width rules to minimize channel length modulation effects ($V_{ds}$ mismatches)."
+    },
+    "default": {
+      "w_val": 1.0,
+      "l_val": 0.5,
+      "reasoning": "Balanced sizing parameters applied."
+    }
+  },
+  "components": [
+    {"id": "M_REF", "type": "NMOS", "w_key": "w_val", "l_key": "l_val"},
+    {"id": "M_MIR", "type": "NMOS", "w_key": "w_val", "l_key": "l_val"},
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_IREF", "type": "PIN", "label": "I_REF"},
+    {"id": "P_IOUT", "type": "PIN", "label": "I_OUT"}
+  ],
+  "connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_REF", "pin": "S", "net": "GND"},
+    {"comp": "M_REF", "pin": "B", "net": "GND"},
+    {"comp": "M_REF", "pin": "G", "net": "gate_net"},
+    {"comp": "M_REF", "pin": "D", "net": "gate_net"},
+    {"comp": "M_MIR", "pin": "S", "net": "GND"},
+    {"comp": "M_MIR", "pin": "B", "net": "GND"},
+    {"comp": "M_MIR", "pin": "G", "net": "gate_net"},
+    {"comp": "M_MIR", "pin": "D", "net": "out_net"},
+    {"comp": "P_IREF", "pin": "IO", "net": "gate_net"},
+    {"comp": "P_IOUT", "pin": "IO", "net": "out_net"}
+  ]
+}

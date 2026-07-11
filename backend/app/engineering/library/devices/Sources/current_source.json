@@ -1,0 +1,31 @@
+{
+  "name": "Current_Source",
+  "pins": [
+    "PLUS",
+    "MINUS"
+  ],
+  "parameters": {
+    "I": 1e-06
+  },
+  "model": "sky130_fd_pr__idc",
+  "category": "Sources",
+  "desc": " Curated Current_Source component optimized for open PDK runs.",
+  "symbol_svg": "<circle cx='20' cy='20' r='10' />",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "I",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Sources block compiled for local simulation."
+  }
+}

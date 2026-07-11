@@ -1,0 +1,28 @@
+{
+  "name": "Macro_Block",
+  "pins": [],
+  "parameters": {
+    "area_um2": 10000
+  },
+  "model": "sky130_fd_pr__macro",
+  "category": "Physical Design",
+  "desc": " Curated Macro_Block component optimized for open PDK runs.",
+  "symbol_svg": "",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "area_um2",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Physical Design block compiled for local simulation."
+  }
+}

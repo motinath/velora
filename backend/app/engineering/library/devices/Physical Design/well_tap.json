@@ -1,0 +1,28 @@
+{
+  "name": "Well_Tap",
+  "pins": [],
+  "parameters": {
+    "interval_um": 20
+  },
+  "model": "sky130_fd_sc_hd__tapvpwrvgnd_1",
+  "category": "Physical Design",
+  "desc": " Curated Well_Tap component optimized for open PDK runs.",
+  "symbol_svg": "",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "interval_um",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Physical Design block compiled for local simulation."
+  }
+}

@@ -2,9 +2,13 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.database.connection import engine, Base
-from app.api import auth, projects, designs
-from app.events.handlers import register_event_handlers
+from app.workspace.database.connection import engine, Base
+from app.workspace.api import auth, projects, designs, plugins, library
+from app.workspace.events.handlers import register_event_handlers
+
+# Import plugins to trigger their auto-registration on startup
+import app.plugins.synopsys
+import app.plugins.siemens
 
 # Setup logs
 logging.basicConfig(
@@ -44,6 +48,8 @@ register_event_handlers()
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(projects.router, prefix="/api/v1")
 app.include_router(designs.router, prefix="/api/v1")
+app.include_router(plugins.router, prefix="/api/v1")
+app.include_router(library.router, prefix="/api/v1")
 
 @app.get("/api/v1/health")
 def health_check():

@@ -1,0 +1,11 @@
+{
+  "name": "SKY130",
+  "min_channel_width": 0.15,
+  "min_channel_length": 0.15,
+  "typical_vdd": 1.8,
+  "max_allowable_current": 0.01,
+  "rules": {
+    "PR": "Pull-up ratio CR/PR rules check for cell stability",
+    "CR": "Cell ratio check for SRAM cells"
+  }
+}

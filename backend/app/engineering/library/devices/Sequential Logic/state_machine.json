@@ -1,0 +1,33 @@
+{
+  "name": "State_Machine",
+  "pins": [
+    "CLK",
+    "RST",
+    "IN",
+    "OUT"
+  ],
+  "parameters": {
+    "states": 4
+  },
+  "model": "sky130_fd_sc_hd__fsm",
+  "category": "Sequential Logic",
+  "desc": " Curated State_Machine component optimized for open PDK runs.",
+  "symbol_svg": "",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "states",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Sequential Logic block compiled for local simulation."
+  }
+}

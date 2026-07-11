@@ -1,0 +1,33 @@
+{
+  "name": "Transformer",
+  "pins": [
+    "P1",
+    "P2",
+    "S1",
+    "S2"
+  ],
+  "parameters": {
+    "ratio": 1.0
+  },
+  "model": "sky130_fd_pr__transformer",
+  "category": "Passive Components",
+  "desc": " Curated Transformer component optimized for open PDK runs.",
+  "symbol_svg": "<circle cx='20' cy='20' r='10' />",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "ratio",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Passive Components block compiled for local simulation."
+  }
+}

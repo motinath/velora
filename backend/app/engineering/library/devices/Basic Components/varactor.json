@@ -1,0 +1,31 @@
+{
+  "name": "Varactor",
+  "pins": [
+    "A",
+    "K"
+  ],
+  "parameters": {
+    "c0": 1e-12
+  },
+  "model": "sky130_fd_pr__varactor",
+  "category": "Basic Components",
+  "desc": " Curated Varactor component optimized for open PDK runs.",
+  "symbol_svg": "<rect x='10' y='10' width='20' height='20' />",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "c0",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Basic Components block compiled for local simulation."
+  }
+}

@@ -122,5 +122,42 @@ export const api = {
   // Direct Analysis
   explainRtl: (fileId: number) => request(`/analysis/rtl/explain?file_id=${fileId}`, { method: "POST" }),
   analyzeReport: (fileId: number) => request(`/analysis/report/analyze?file_id=${fileId}`, { method: "POST" }),
-  analyzeLog: (fileId: number) => request(`/analysis/log/analyze?file_id=${fileId}`, { method: "POST" })
+  analyzeLog: (fileId: number) => request(`/analysis/log/analyze?file_id=${fileId}`, { method: "POST" }),
+
+  // Version Rollbacks & Design Intents
+  rollbackDesign: (projectId: number, version: number) => 
+    request(`/designs/project/${projectId}/rollback/${version}`, { method: "POST" }),
+  getDesignIntents: (designId: number) => 
+    request(`/designs/${designId}/intents`),
+
+  // Plugins & EDA tool execution
+  listPlugins: () => request("/plugins/"),
+  executePluginCommand: (pluginName: string, command: string, args: any = {}) => 
+    request(`/plugins/${pluginName}/execute`, {
+      method: "POST",
+      body: JSON.stringify({ command, args })
+    }),
+
+  // Collaboration & Comments
+  shareProject: (projectId: number, email: string, role: string) =>
+    request(`/projects/${projectId}/share`, {
+      method: "POST",
+      body: JSON.stringify({ email, role })
+    }),
+  getProjectPermissions: (projectId: number) => request(`/projects/${projectId}/permissions`),
+  addProjectComment: (projectId: number, commentText: string) =>
+    request(`/projects/${projectId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ comment_text: commentText })
+    }),
+  getProjectComments: (projectId: number) => request(`/projects/${projectId}/comments`),
+
+  // Library Manager
+  listLibraryComponents: () => request("/library/components"),
+  listPdkStatus: () => request("/library/pdk"),
+  togglePdk: (pdkName: string, enabled: boolean) => 
+    request("/library/pdk/toggle", {
+      method: "POST",
+      body: JSON.stringify({ pdk_name: pdkName, enabled })
+    })
 };

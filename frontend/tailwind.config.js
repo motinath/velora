@@ -7,21 +7,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#080b11",
-        card: "#111622",
-        "card-hover": "#171e2e",
-        border: "#1f293d",
+        background: "#f8fafc",
+        card: "#ffffff",
+        "card-hover": "#f1f5f9",
+        border: "#e2e8f0",
         primary: {
-          DEFAULT: "#00f0ff", // Glowing cyan
-          hover: "#00c8d6",
+          DEFAULT: "#2563eb", // Corporate blue
+          hover: "#1d4ed8",
         },
         secondary: {
-          DEFAULT: "#10b981", // Emerald green
-          hover: "#059669",
+          DEFAULT: "#059669", // Emerald green
+          hover: "#047857",
         },
         slack: {
-          met: "#10b981",
-          violated: "#ef4444",
+          met: "#059669",
+          violated: "#dc2626",
         },
       },
       fontFamily: {

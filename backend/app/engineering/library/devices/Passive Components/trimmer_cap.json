@@ -1,0 +1,31 @@
+{
+  "name": "Trimmer_Cap",
+  "pins": [
+    "1",
+    "2"
+  ],
+  "parameters": {
+    "c_max": 1e-11
+  },
+  "model": "sky130_fd_pr__trim_cap",
+  "category": "Passive Components",
+  "desc": " Curated Trimmer_Cap component optimized for open PDK runs.",
+  "symbol_svg": "<line x1='15' y1='10' x2='15' y2='30' />",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "c_max",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Passive Components block compiled for local simulation."
+  }
+}

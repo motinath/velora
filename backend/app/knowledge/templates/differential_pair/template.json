@@ -1,0 +1,76 @@
+{
+  "design_type": "Differential Pair",
+  "name": "Differential Pair basic gain stage",
+  "description": "5-transistor active loaded differential amplifier stage with tail bias transistor",
+  "optimizations": {
+    "Low Leakage": {
+      "w_in": 2.0,
+      "w_load": 3.0,
+      "w_tail": 2.0,
+      "l_val": 0.5,
+      "reasoning": "Increased channel lengths and optimized input widths to minimize subthreshold leakages."
+    },
+    "High Speed": {
+      "w_in": 4.0,
+      "w_load": 6.0,
+      "w_tail": 4.0,
+      "l_val": 0.15,
+      "reasoning": "Sized for maximum transconductance (g_m) at minimum PDK channel length."
+    },
+    "High Gain": {
+      "w_in": 5.0,
+      "w_load": 4.0,
+      "w_tail": 3.0,
+      "l_val": 1.0,
+      "reasoning": "Sized with long channel length PMOS/NMOS pairs to increase output resistance (r_o) and voltage gain."
+    },
+    "default": {
+      "w_in": 2.0,
+      "w_load": 3.0,
+      "w_tail": 2.0,
+      "l_val": 0.25,
+      "reasoning": "Symmetric common mode sizing parameters applied."
+    }
+  },
+  "components": [
+    {"id": "M_IN1", "type": "NMOS", "w_key": "w_in", "l_key": "l_val"},
+    {"id": "M_IN2", "type": "NMOS", "w_key": "w_in", "l_key": "l_val"},
+    {"id": "M_L1", "type": "PMOS", "w_key": "w_load", "l_key": "l_val"},
+    {"id": "M_L2", "type": "PMOS", "w_key": "w_load", "l_key": "l_val"},
+    {"id": "M_TAIL", "type": "NMOS", "w_key": "w_tail", "l_key": "l_val"},
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_INP", "type": "PIN", "label": "IN_P"},
+    {"id": "P_INM", "type": "PIN", "label": "IN_M"},
+    {"id": "P_OUT", "type": "PIN", "label": "V_OUT"},
+    {"id": "P_VBIAS", "type": "PIN", "label": "V_BIAS"}
+  ],
+  "connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_L1", "pin": "S", "net": "VDD"},
+    {"comp": "M_L1", "pin": "B", "net": "VDD"},
+    {"comp": "M_L1", "pin": "G", "net": "load_gate"},
+    {"comp": "M_L1", "pin": "D", "net": "load_gate"},
+    {"comp": "M_L2", "pin": "S", "net": "VDD"},
+    {"comp": "M_L2", "pin": "B", "net": "VDD"},
+    {"comp": "M_L2", "pin": "G", "net": "load_gate"},
+    {"comp": "M_L2", "pin": "D", "net": "out_net"},
+    {"comp": "M_IN1", "pin": "D", "net": "load_gate"},
+    {"comp": "M_IN1", "pin": "G", "net": "inp_net"},
+    {"comp": "M_IN1", "pin": "S", "net": "tail_node"},
+    {"comp": "M_IN1", "pin": "B", "net": "GND"},
+    {"comp": "M_IN2", "pin": "D", "net": "out_net"},
+    {"comp": "M_IN2", "pin": "G", "net": "inm_net"},
+    {"comp": "M_IN2", "pin": "S", "net": "tail_node"},
+    {"comp": "M_IN2", "pin": "B", "net": "GND"},
+    {"comp": "M_TAIL", "pin": "D", "net": "tail_node"},
+    {"comp": "M_TAIL", "pin": "G", "net": "vbias_net"},
+    {"comp": "M_TAIL", "pin": "S", "net": "GND"},
+    {"comp": "M_TAIL", "pin": "B", "net": "GND"},
+    {"comp": "P_INP", "pin": "IO", "net": "inp_net"},
+    {"comp": "P_INM", "pin": "IO", "net": "inm_net"},
+    {"comp": "P_OUT", "pin": "IO", "net": "out_net"},
+    {"comp": "P_VBIAS", "pin": "IO", "net": "vbias_net"}
+  ]
+}

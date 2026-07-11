@@ -1,0 +1,76 @@
+{
+  "design_type": "6T SRAM",
+  "name": "6T SRAM Cell cross-coupled latch",
+  "description": "Double inverter cross-coupled regenerative feedback bistable memory cell with access pass transistors",
+  "optimizations": {
+    "Low Leakage": {
+      "l_val": 0.25,
+      "w_pd": 0.60,
+      "w_pu": 0.40,
+      "w_pg": 0.45,
+      "reasoning": "Sizing optimized for low subthreshold leakage: Increased channel length L=0.25um."
+    },
+    "High Speed": {
+      "l_val": 0.15,
+      "w_pd": 0.80,
+      "w_pu": 0.54,
+      "w_pg": 0.60,
+      "reasoning": "Sizing optimized for high-speed read/write access: Minimum length L=0.15um and wider channels."
+    },
+    "default": {
+      "l_val": 0.15,
+      "w_pd": 0.54,
+      "w_pu": 0.36,
+      "w_pg": 0.40,
+      "reasoning": "Standard sizing applied for SKY130 cell stability rules."
+    }
+  },
+  "components": [
+    {"id": "M_PU1", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PD1", "type": "NMOS", "w_key": "w_pd", "l_key": "l_val"},
+    {"id": "M_PU2", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PD2", "type": "NMOS", "w_key": "w_pd", "l_key": "l_val"},
+    {"id": "M_PG1", "type": "NMOS", "w_key": "w_pg", "l_key": "l_val"},
+    {"id": "M_PG2", "type": "NMOS", "w_key": "w_pg", "l_key": "l_val"},
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_WL", "type": "PIN", "label": "WL"},
+    {"id": "P_BL", "type": "PIN", "label": "BL"},
+    {"id": "P_BLB", "type": "PIN", "label": "BLB"},
+    {"id": "P_Q", "type": "PIN", "label": "Q"},
+    {"id": "P_QB", "type": "PIN", "label": "QB"}
+  ],
+  "connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1", "pin": "S", "net": "VDD"},
+    {"comp": "M_PU1", "pin": "B", "net": "VDD"},
+    {"comp": "M_PU1", "pin": "D", "net": "Q"},
+    {"comp": "M_PU1", "pin": "G", "net": "QB"},
+    {"comp": "M_PD1", "pin": "S", "net": "GND"},
+    {"comp": "M_PD1", "pin": "B", "net": "GND"},
+    {"comp": "M_PD1", "pin": "D", "net": "Q"},
+    {"comp": "M_PD1", "pin": "G", "net": "QB"},
+    {"comp": "M_PU2", "pin": "S", "net": "VDD"},
+    {"comp": "M_PU2", "pin": "B", "net": "VDD"},
+    {"comp": "M_PU2", "pin": "D", "net": "QB"},
+    {"comp": "M_PU2", "pin": "G", "net": "Q"},
+    {"comp": "M_PD2", "pin": "S", "net": "GND"},
+    {"comp": "M_PD2", "pin": "B", "net": "GND"},
+    {"comp": "M_PD2", "pin": "D", "net": "QB"},
+    {"comp": "M_PD2", "pin": "G", "net": "Q"},
+    {"comp": "M_PG1", "pin": "D", "net": "BL"},
+    {"comp": "M_PG1", "pin": "G", "net": "WL"},
+    {"comp": "M_PG1", "pin": "S", "net": "Q"},
+    {"comp": "M_PG1", "pin": "B", "net": "GND"},
+    {"comp": "M_PG2", "pin": "D", "net": "BLB"},
+    {"comp": "M_PG2", "pin": "G", "net": "WL"},
+    {"comp": "M_PG2", "pin": "S", "net": "QB"},
+    {"comp": "M_PG2", "pin": "B", "net": "GND"},
+    {"comp": "P_WL", "pin": "IO", "net": "WL"},
+    {"comp": "P_BL", "pin": "IO", "net": "BL"},
+    {"comp": "P_BLB", "pin": "IO", "net": "BLB"},
+    {"comp": "P_Q", "pin": "IO", "net": "Q"},
+    {"comp": "P_QB", "pin": "IO", "net": "QB"}
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "design_type": "Ring Oscillator",
+  "name": "Ring Oscillator dynamic logic loop",
+  "description": "Odd-stage inverter delay logic loop forming positive feedback self-sustaining oscillations",
+  "optimizations": {
+    "Low Leakage": {
+      "w_p": 0.54,
+      "w_n": 0.36,
+      "l_val": 0.35,
+      "reasoning": "Sizing optimized for low subthreshold leakage: Increased channel length L=0.35um."
+    },
+    "Low Power": {
+      "w_p": 0.54,
+      "w_n": 0.36,
+      "l_val": 0.35,
+      "reasoning": "Sizing optimized for low power consumption: Increased channel length L=0.35um."
+    },
+    "High Speed": {
+      "w_p": 1.62,
+      "w_n": 1.08,
+      "l_val": 0.15,
+      "reasoning": "Sizing optimized for high frequency: Minimum length L=0.15um and wide channels."
+    },
+    "default": {
+      "w_p": 0.54,
+      "w_n": 0.36,
+      "l_val": 0.15,
+      "reasoning": "Standard sizing applied for SKY130 technology nodes."
+    }
+  },
+  "base_components": [
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_OUT", "type": "PIN", "label": "OSC_OUT"}
+  ],
+  "base_connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"}
+  ]
+}

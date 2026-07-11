@@ -1,0 +1,32 @@
+{
+  "name": "NAND2",
+  "pins": [
+    "A",
+    "B",
+    "Y"
+  ],
+  "parameters": {
+    "delay_ps": 15
+  },
+  "model": "sky130_fd_sc_hd__nand2_1",
+  "category": "Digital Logic",
+  "desc": " Curated NAND2 component optimized for open PDK runs.",
+  "symbol_svg": "<path d='M10,10 L15,10 C20,10 20,20 15,20 L10,20 Z' />",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "delay_ps",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Digital Logic block compiled for local simulation."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "Zener_Diode",
+  "pins": [
+    "A",
+    "K"
+  ],
+  "parameters": {
+    "vbreak": 5.1
+  },
+  "model": "sky130_fd_pr__zener",
+  "category": "Basic Components",
+  "desc": " Curated Zener_Diode component optimized for open PDK runs.",
+  "symbol_svg": "<polygon points='10,10 20,20 10,20' />",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "vbreak",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Basic Components block compiled for local simulation."
+  }
+}

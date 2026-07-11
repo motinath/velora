@@ -1,0 +1,32 @@
+{
+  "name": "Spin_Qubit_Dot",
+  "pins": [
+    "GATE",
+    "SOURCE",
+    "DRAIN"
+  ],
+  "parameters": {
+    "valley_splitting_uev": 100
+  },
+  "model": "cryo_pr__spin_qubit",
+  "category": "Quantum",
+  "desc": " Curated Spin_Qubit_Dot component optimized for open PDK runs.",
+  "symbol_svg": "",
+  "spice_model": "",
+  "verilog_model": "",
+  "ai_metadata": {
+    "critical_parameter": "valley_splitting_uev",
+    "optimization_guideline": "Adjust dimensions to meet slack margins."
+  },
+  "design_constraints": {
+    "supply_voltage_max_v": 1.8
+  },
+  "pdk_compatibility": [
+    "SKY130",
+    "TSMC65"
+  ],
+  "documentation": {
+    "reference_pdk_doc": "SKY130 Process Design Kit Reference Manual",
+    "notes": " Curated Quantum block compiled for local simulation."
+  }
+}
