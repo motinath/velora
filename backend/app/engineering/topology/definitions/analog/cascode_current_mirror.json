@@ -1,0 +1,89 @@
+{
+  "family": "Current Mirror",
+  "variant": "Cascode",
+  "canonical": "Cascode Current Mirror",
+  "name": "Cascode NMOS Current Mirror — High Output Impedance",
+  "description": "Four-transistor cascode current mirror. A cascode device (M_CASC_REF, M_CASC_MIR) is stacked above each mirror transistor (M_REF, M_MIR). The cascode shields the mirror transistor from VDS variations, dramatically improving output resistance (r_out ≈ gm·ro²) and current accuracy. Standard choice for precision analog bias circuits.",
+  "category": "Analog",
+  "technology": ["SKY130"],
+  "keywords": ["cascode mirror", "cascode current mirror", "high impedance mirror", "regulated mirror", "precision mirror"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "High Precision": {
+      "w_val": 4.0,
+      "l_val": 1.0,
+      "w_casc": 4.0,
+      "l_casc": 0.5,
+      "reasoning": "Long mirror devices minimise λ; cascode ratio optimised for maximum output resistance."
+    },
+    "Low Voltage": {
+      "w_val": 2.0,
+      "l_val": 0.5,
+      "w_casc": 2.0,
+      "l_casc": 0.25,
+      "reasoning": "Shorter cascode maintains headroom at 1.2V supply while preserving most of the impedance benefit."
+    },
+    "default": {
+      "w_val": 2.0,
+      "l_val": 0.5,
+      "w_casc": 2.0,
+      "l_casc": 0.35,
+      "reasoning": "Balanced precision/headroom trade-off for 1.8V SKY130 supply."
+    }
+  },
+
+  "components": [
+    {"id": "M_REF",       "type": "NMOS", "w_key": "w_val",  "l_key": "l_val"},
+    {"id": "M_MIR",       "type": "NMOS", "w_key": "w_val",  "l_key": "l_val"},
+    {"id": "M_CASC_REF",  "type": "NMOS", "w_key": "w_casc", "l_key": "l_casc"},
+    {"id": "M_CASC_MIR",  "type": "NMOS", "w_key": "w_casc", "l_key": "l_casc"},
+    {"id": "V_VDD",       "type": "VDD"},
+    {"id": "V_GND",       "type": "GND"},
+    {"id": "P_IREF",      "type": "PIN",  "label": "I_REF"},
+    {"id": "P_IOUT",      "type": "PIN",  "label": "I_OUT"},
+    {"id": "P_VBIAS",     "type": "PIN",  "label": "V_CASC_BIAS"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",      "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",      "pin": "GND", "net": "GND"},
+    {"comp": "M_REF",      "pin": "S",   "net": "GND"},
+    {"comp": "M_REF",      "pin": "B",   "net": "GND"},
+    {"comp": "M_REF",      "pin": "D",   "net": "ref_source"},
+    {"comp": "M_REF",      "pin": "G",   "net": "gate_net"},
+    {"comp": "M_CASC_REF", "pin": "S",   "net": "ref_source"},
+    {"comp": "M_CASC_REF", "pin": "B",   "net": "GND"},
+    {"comp": "M_CASC_REF", "pin": "D",   "net": "gate_net"},
+    {"comp": "M_CASC_REF", "pin": "G",   "net": "casc_bias"},
+    {"comp": "M_MIR",      "pin": "S",   "net": "GND"},
+    {"comp": "M_MIR",      "pin": "B",   "net": "GND"},
+    {"comp": "M_MIR",      "pin": "D",   "net": "mir_source"},
+    {"comp": "M_MIR",      "pin": "G",   "net": "gate_net"},
+    {"comp": "M_CASC_MIR", "pin": "S",   "net": "mir_source"},
+    {"comp": "M_CASC_MIR", "pin": "B",   "net": "GND"},
+    {"comp": "M_CASC_MIR", "pin": "D",   "net": "out_net"},
+    {"comp": "M_CASC_MIR", "pin": "G",   "net": "casc_bias"},
+    {"comp": "P_IREF",     "pin": "IO",  "net": "gate_net"},
+    {"comp": "P_IOUT",     "pin": "IO",  "net": "out_net"},
+    {"comp": "P_VBIAS",    "pin": "IO",  "net": "casc_bias"}
+  ],
+
+  "sizing_notes": {
+    "M_REF":      "Bottom reference NMOS — diode-connected; sets the gate bias voltage.",
+    "M_CASC_REF": "Top cascode on reference side — diode-connected too; sets cascode bias.",
+    "M_MIR":      "Bottom mirror NMOS — matched to M_REF.",
+    "M_CASC_MIR": "Top cascode on output side — shields M_MIR from VDS variations, multiplying output resistance."
+  },
+
+  "kg_nodes": [
+    {"id": "Cascode Current Mirror","type": "Circuit Block",  "description": "Four-transistor current mirror with cascode devices for high output impedance."},
+    {"id": "Output Impedance",      "type": "Metric / Constraint","description": "Resistance seen at the output node; higher is better for current source accuracy."}
+  ],
+  "kg_edges": [
+    {"source": "Cascode Current Mirror","relation": "extends",   "target": "Current Mirror"},
+    {"source": "Cascode Current Mirror","relation": "improves",  "target": "Output Impedance"},
+    {"source": "Cascode Current Mirror","relation": "reduces",   "target": "Channel Length Modulation"}
+  ]
+}

@@ -1,106 +1,129 @@
-from typing import Dict, Any, List, Set
+"""
+KnowledgeGraph — relational graph of circuit concepts, topologies, and metrics.
+
+All topology-specific nodes and edges are now loaded from the TopologyRegistry
+at startup. The graph will automatically include every new topology added to
+engineering/topology/definitions/ without any changes here.
+
+Shared / cross-topology nodes (e.g. "Propagation Delay", "Inverter") that
+appear in multiple topology definitions are de-duplicated automatically by
+the registry's all_kg_nodes() / all_kg_edges() methods.
+"""
+
+import logging
+from typing import Dict, Any, List
+
+logger = logging.getLogger(__name__)
+
 
 class KnowledgeGraph:
     def __init__(self):
         self.nodes: Dict[str, Dict[str, Any]] = {}
         self.edges: List[Dict[str, str]] = []
-        self._populate_default_graph()
+        self._build_from_registry()
+
+    # ------------------------------------------------------------------
+    # Population
+    # ------------------------------------------------------------------
+
+    def _build_from_registry(self) -> None:
+        """
+        Pull all kg_nodes and kg_edges from the topology registry and
+        register them. Shared nodes referenced by multiple topologies are
+        de-duplicated (first definition wins for the node body).
+        """
+        from app.engineering.topology.registry import topology_registry
+
+        node_count = 0
+        edge_count = 0
+
+        for node in topology_registry.all_kg_nodes():
+            node_id = node.get("id", "")
+            if node_id and node_id not in self.nodes:
+                self.add_node(
+                    node_id=node_id,
+                    node_type=node.get("type", "Unknown"),
+                    description=node.get("description", ""),
+                )
+                node_count += 1
+
+        for edge in topology_registry.all_kg_edges():
+            self.add_edge(
+                source=edge.get("source", ""),
+                relation=edge.get("relation", "related to"),
+                target=edge.get("target", ""),
+            )
+            edge_count += 1
+
+        logger.info(
+            f"[KnowledgeGraph] Built from registry: "
+            f"{node_count} nodes, {edge_count} edges."
+        )
+
+    # ------------------------------------------------------------------
+    # Graph primitives
+    # ------------------------------------------------------------------
 
     def add_node(self, node_id: str, node_type: str, description: str) -> None:
         self.nodes[node_id.lower()] = {
-            "id": node_id,
-            "type": node_type,
-            "description": description
+            "id":          node_id,
+            "type":        node_type,
+            "description": description,
         }
 
     def add_edge(self, source: str, relation: str, target: str) -> None:
         self.edges.append({
-            "source": source.lower(),
+            "source":   source.lower(),
             "relation": relation,
-            "target": target.lower()
+            "target":   target.lower(),
         })
+
+    # ------------------------------------------------------------------
+    # Query API
+    # ------------------------------------------------------------------
 
     def query_relations(self, term: str) -> List[Dict[str, str]]:
         """
-        Finds all direct connections (incoming and outgoing) for a term.
+        Returns all edges (in either direction) that involve `term`.
         """
         term_lower = term.lower()
         connected = []
         for edge in self.edges:
             if edge["source"] == term_lower or edge["target"] == term_lower:
-                # Find display casing
                 source_display = self.nodes.get(edge["source"], {}).get("id", edge["source"])
                 target_display = self.nodes.get(edge["target"], {}).get("id", edge["target"])
-                
                 connected.append({
-                    "source": source_display,
+                    "source":   source_display,
                     "relation": edge["relation"],
-                    "target": target_display
+                    "target":   target_display,
                 })
         return connected
 
     def get_context_summary(self, term: str) -> str:
         """
-        Generates a text description of the term's dependencies and verified relations.
+        Generates a markdown-style text description of a term's dependencies.
         """
         relations = self.query_relations(term)
         if not relations:
             return f"No relational dependencies registered for term: {term}."
-            
-        summary_lines = [f"Relational Knowledge Graph context for '{term}':"]
+
+        lines = [f"Relational Knowledge Graph context for '{term}':"]
         for rel in relations:
-            summary_lines.append(f"- [{rel['source']}] --({rel['relation']})--> [{rel['target']}]")
-            
-        return "\n".join(summary_lines)
+            lines.append(
+                f"- [{rel['source']}] --({rel['relation']})--> [{rel['target']}]"
+            )
+        return "\n".join(lines)
 
-    def _populate_default_graph(self) -> None:
-        # Node Definitions
-        self.add_node("6T SRAM", "Circuit Block", "Standard 6-transistor Static RAM storage cell.")
-        self.add_node("Cross-Coupled Latch", "Topology", "Positive feedback CMOS latch configuration.")
-        self.add_node("Inverter", "Logic Gate", "Standard CMOS inversion driver cell.")
-        self.add_node("Access Gate", "Subsystem", "Pass-transistor path controlled by the Word Line (WL).")
-        self.add_node("Static Noise Margin", "Metric / Constraint", "Minimum DC voltage required to flip the cell state.")
-        self.add_node("Cell Ratio", "DRC Sizing Guideline", "Driver NMOS size ratio over Access NMOS size.")
-        self.add_node("Pull-up Ratio", "DRC Sizing Guideline", "Access NMOS size ratio over Pull-up PMOS size.")
-        
-        self.add_node("Ring Oscillator", "Circuit Block", "Odd-stage feedback loop generating clock signals.")
-        self.add_node("Oscillation Frequency", "Metric / Constraint", "Cycle frequency dependent on stage count and delay path.")
-        self.add_node("Propagation Delay", "Metric / Constraint", "Transistor charging/discharging time interval.")
-        self.add_node("Jitter", "Metric / Constraint", "Frequency cycle deviation caused by noise.")
-        
-        self.add_node("Current Mirror", "Circuit Block", "Matched transistor paths replicating bias current values.")
-        self.add_node("Diode Configuration", "Topology", "Transistor gate tied to its drain node to create bias reference.")
-        self.add_node("Channel Length Modulation", "Physical Effect", "Effective channel width variations under VDS fluctuation.")
-        
-        self.add_node("Differential Pair", "Circuit Block", "Symmetrical transistor pair amplifying difference signals.")
-        self.add_node("Common Mode Rejection", "Metric / Constraint", "Suppression of joint signal noise.")
-        self.add_node("Active Load", "Subsystem", "PMOS mirror configuration acting as high-impedance loads.")
-        self.add_node("Tail Current Source", "Subsystem", "NMOS current sink holding total branch current constant.")
+    def get_node(self, node_id: str) -> Dict[str, Any]:
+        """Return the node dict for a given ID (case-insensitive)."""
+        return self.nodes.get(node_id.lower(), {})
 
-        # Edge Definitions (Dependencies)
-        # SRAM
-        self.add_edge("6T SRAM", "uses", "Cross-Coupled Latch")
-        self.add_edge("6T SRAM", "uses", "Access Gate")
-        self.add_edge("Cross-Coupled Latch", "composed of", "Inverter")
-        self.add_edge("6T SRAM", "verified by", "Static Noise Margin")
-        self.add_edge("Cross-Coupled Latch", "constrained by", "Cell Ratio")
-        self.add_edge("Access Gate", "constrained by", "Pull-up Ratio")
-        
-        # Ring Oscillator
-        self.add_edge("Ring Oscillator", "composed of", "Inverter")
-        self.add_edge("Ring Oscillator", "depends on", "Propagation Delay")
-        self.add_edge("Oscillation Frequency", "limited by", "Propagation Delay")
-        self.add_edge("Ring Oscillator", "verified by", "Oscillation Frequency")
-        self.add_edge("Oscillation Frequency", "affects", "Jitter")
-        
-        # Current Mirror
-        self.add_edge("Current Mirror", "uses", "Diode Configuration")
-        self.add_edge("Current Mirror", "susceptible to", "Channel Length Modulation")
-        
-        # Differential Pair
-        self.add_edge("Differential Pair", "uses", "Active Load")
-        self.add_edge("Differential Pair", "uses", "Tail Current Source")
-        self.add_edge("Tail Current Source", "composed of", "Current Mirror")
-        self.add_edge("Differential Pair", "verified by", "Common Mode Rejection")
+    def all_nodes(self) -> List[Dict[str, Any]]:
+        return list(self.nodes.values())
 
+    def all_edges(self) -> List[Dict[str, str]]:
+        return list(self.edges)
+
+
+# Module-level singleton
 knowledge_graph = KnowledgeGraph()

@@ -1,0 +1,120 @@
+{
+  "family": "SRAM",
+  "variant": "6T",
+  "canonical": "6T SRAM",
+  "name": "6T SRAM Cell — Cross-Coupled CMOS Latch",
+  "description": "Double inverter cross-coupled regenerative feedback bistable memory cell with two access pass transistors. The industry-standard 6-transistor SRAM topology offering the best balance of area, stability, and performance.",
+  "category": "Memory",
+  "technology": ["SKY130"],
+  "keywords": ["6t sram", "6t", "sram", "static ram"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "Low Leakage": {
+      "l_val": 0.25,
+      "w_pd": 0.60,
+      "w_pu": 0.40,
+      "w_pg": 0.45,
+      "reasoning": "Increased channel length L=0.25um reduces subthreshold leakage in standby. Slightly wider pull-down maintains read stability at the cost of increased area."
+    },
+    "High Speed": {
+      "l_val": 0.15,
+      "w_pd": 0.80,
+      "w_pu": 0.54,
+      "w_pg": 0.60,
+      "reasoning": "Minimum channel length L=0.15um and wider channels minimise access time and maximise read/write bandwidth."
+    },
+    "Minimal Area": {
+      "l_val": 0.15,
+      "w_pd": 0.42,
+      "w_pu": 0.28,
+      "w_pg": 0.36,
+      "reasoning": "Minimum-width transistors to fit highest density array; cell ratio and pull-up ratio stay above DRC limits."
+    },
+    "default": {
+      "l_val": 0.15,
+      "w_pd": 0.54,
+      "w_pu": 0.36,
+      "w_pg": 0.40,
+      "reasoning": "Standard SKY130 sizing: Cell Ratio ≈ 1.35, Pull-up Ratio ≈ 0.90 for reliable read stability and write margin."
+    }
+  },
+
+  "components": [
+    {"id": "M_PU1", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PD1", "type": "NMOS", "w_key": "w_pd", "l_key": "l_val"},
+    {"id": "M_PU2", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PD2", "type": "NMOS", "w_key": "w_pd", "l_key": "l_val"},
+    {"id": "M_PG1", "type": "NMOS", "w_key": "w_pg", "l_key": "l_val"},
+    {"id": "M_PG2", "type": "NMOS", "w_key": "w_pg", "l_key": "l_val"},
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_WL",  "type": "PIN", "label": "WL"},
+    {"id": "P_BL",  "type": "PIN", "label": "BL"},
+    {"id": "P_BLB", "type": "PIN", "label": "BLB"},
+    {"id": "P_Q",   "type": "PIN", "label": "Q"},
+    {"id": "P_QB",  "type": "PIN", "label": "QB"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1", "pin": "S", "net": "VDD"},
+    {"comp": "M_PU1", "pin": "B", "net": "VDD"},
+    {"comp": "M_PU1", "pin": "D", "net": "Q"},
+    {"comp": "M_PU1", "pin": "G", "net": "QB"},
+    {"comp": "M_PD1", "pin": "S", "net": "GND"},
+    {"comp": "M_PD1", "pin": "B", "net": "GND"},
+    {"comp": "M_PD1", "pin": "D", "net": "Q"},
+    {"comp": "M_PD1", "pin": "G", "net": "QB"},
+    {"comp": "M_PU2", "pin": "S", "net": "VDD"},
+    {"comp": "M_PU2", "pin": "B", "net": "VDD"},
+    {"comp": "M_PU2", "pin": "D", "net": "QB"},
+    {"comp": "M_PU2", "pin": "G", "net": "Q"},
+    {"comp": "M_PD2", "pin": "S", "net": "GND"},
+    {"comp": "M_PD2", "pin": "B", "net": "GND"},
+    {"comp": "M_PD2", "pin": "D", "net": "QB"},
+    {"comp": "M_PD2", "pin": "G", "net": "Q"},
+    {"comp": "M_PG1", "pin": "D", "net": "BL"},
+    {"comp": "M_PG1", "pin": "G", "net": "WL"},
+    {"comp": "M_PG1", "pin": "S", "net": "Q"},
+    {"comp": "M_PG1", "pin": "B", "net": "GND"},
+    {"comp": "M_PG2", "pin": "D", "net": "BLB"},
+    {"comp": "M_PG2", "pin": "G", "net": "WL"},
+    {"comp": "M_PG2", "pin": "S", "net": "QB"},
+    {"comp": "M_PG2", "pin": "B", "net": "GND"},
+    {"comp": "P_WL",  "pin": "IO", "net": "WL"},
+    {"comp": "P_BL",  "pin": "IO", "net": "BL"},
+    {"comp": "P_BLB", "pin": "IO", "net": "BLB"},
+    {"comp": "P_Q",   "pin": "IO", "net": "Q"},
+    {"comp": "P_QB",  "pin": "IO", "net": "QB"}
+  ],
+
+  "sizing_notes": {
+    "M_PU1": "Pull-up PMOS — sized small to keep Pull-up Ratio < 1.0 ensuring write overwrite succeeds.",
+    "M_PU2": "Pull-up PMOS — mirror of M_PU1 for the complementary latch half.",
+    "M_PD1": "Pull-down NMOS — sized wider to maintain Cell Ratio > 1.2 preventing inadvertent read flip.",
+    "M_PD2": "Pull-down NMOS — mirror of M_PD1.",
+    "M_PG1": "Access NMOS — sized as a compromise between read stability and write margin.",
+    "M_PG2": "Access NMOS — mirror of M_PG1 on the complementary bitline."
+  },
+
+  "kg_nodes": [
+    {"id": "6T SRAM",           "type": "Circuit Block",         "description": "Standard 6-transistor Static RAM storage cell."},
+    {"id": "Cross-Coupled Latch","type": "Topology",              "description": "Positive feedback CMOS latch configuration."},
+    {"id": "Inverter",           "type": "Logic Gate",            "description": "Standard CMOS inversion driver cell."},
+    {"id": "Access Gate",        "type": "Subsystem",             "description": "Pass-transistor path controlled by the Word Line (WL)."},
+    {"id": "Static Noise Margin","type": "Metric / Constraint",   "description": "Minimum DC voltage required to flip the cell state."},
+    {"id": "Cell Ratio",         "type": "DRC Sizing Guideline",  "description": "Driver NMOS size ratio over Access NMOS size."},
+    {"id": "Pull-up Ratio",      "type": "DRC Sizing Guideline",  "description": "Access NMOS size ratio over Pull-up PMOS size."}
+  ],
+  "kg_edges": [
+    {"source": "6T SRAM",            "relation": "uses",         "target": "Cross-Coupled Latch"},
+    {"source": "6T SRAM",            "relation": "uses",         "target": "Access Gate"},
+    {"source": "Cross-Coupled Latch","relation": "composed of",  "target": "Inverter"},
+    {"source": "6T SRAM",            "relation": "verified by",  "target": "Static Noise Margin"},
+    {"source": "Cross-Coupled Latch","relation": "constrained by","target": "Cell Ratio"},
+    {"source": "Access Gate",        "relation": "constrained by","target": "Pull-up Ratio"}
+  ]
+}

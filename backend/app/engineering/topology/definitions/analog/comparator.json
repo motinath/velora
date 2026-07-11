@@ -1,0 +1,124 @@
+{
+  "family": "Comparator",
+  "variant": "StrongARM",
+  "canonical": "StrongARM Comparator",
+  "name": "StrongARM Latch Comparator",
+  "description": "Dynamic regenerative comparator based on the StrongARM topology. During the reset phase (CLK=0) M_RST pulls output nodes to VDD. During the evaluation phase (CLK=1) M_CLK enables the tail current, the cross-coupled latch regenerates the input voltage difference to a full-swing digital output. Zero static power. Widely used in ADCs and clock-data recovery circuits.",
+  "category": "Analog",
+  "technology": ["SKY130"],
+  "keywords": ["comparator", "strongarm", "strongarm latch", "dynamic comparator", "latch comparator", "adc comparator", "clocked comparator"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "High Speed": {
+      "w_in": 4.0,
+      "w_inv": 2.0,
+      "w_rst": 1.0,
+      "w_clk": 3.0,
+      "l_val": 0.15,
+      "reasoning": "Minimum length and wide input pair maximise regeneration speed; wider tail device reduces evaluation time."
+    },
+    "Low Power": {
+      "w_in": 2.0,
+      "w_inv": 1.0,
+      "w_rst": 0.5,
+      "w_clk": 1.5,
+      "l_val": 0.25,
+      "reasoning": "Smaller devices reduce dynamic power; clock frequency must compensate for longer evaluation time."
+    },
+    "default": {
+      "w_in": 3.0,
+      "w_inv": 1.5,
+      "w_rst": 0.72,
+      "w_clk": 2.0,
+      "l_val": 0.15,
+      "reasoning": "Standard trade-off: input offset < 5mV, evaluation time < 200ps at 1.8V."
+    }
+  },
+
+  "components": [
+    {"id": "M_INP",   "type": "NMOS", "w_key": "w_in",  "l_key": "l_val"},
+    {"id": "M_INM",   "type": "NMOS", "w_key": "w_in",  "l_key": "l_val"},
+    {"id": "M_INV_P", "type": "PMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "M_INV_N", "type": "NMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "M_INV_P2","type": "PMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "M_INV_N2","type": "NMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "M_RST_P", "type": "PMOS", "w_key": "w_rst", "l_key": "l_val"},
+    {"id": "M_RST_N", "type": "PMOS", "w_key": "w_rst", "l_key": "l_val"},
+    {"id": "M_CLK",   "type": "NMOS", "w_key": "w_clk", "l_key": "l_val"},
+    {"id": "V_VDD",   "type": "VDD"},
+    {"id": "V_GND",   "type": "GND"},
+    {"id": "P_INP",   "type": "PIN",  "label": "IN_P"},
+    {"id": "P_INM",   "type": "PIN",  "label": "IN_M"},
+    {"id": "P_CLK",   "type": "PIN",  "label": "CLK"},
+    {"id": "P_OUTP",  "type": "PIN",  "label": "OUT_P"},
+    {"id": "P_OUTM",  "type": "PIN",  "label": "OUT_M"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",    "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",    "pin": "GND", "net": "GND"},
+    {"comp": "M_CLK",    "pin": "S",   "net": "GND"},
+    {"comp": "M_CLK",    "pin": "B",   "net": "GND"},
+    {"comp": "M_CLK",    "pin": "G",   "net": "CLK"},
+    {"comp": "M_CLK",    "pin": "D",   "net": "tail"},
+    {"comp": "M_INP",    "pin": "S",   "net": "tail"},
+    {"comp": "M_INP",    "pin": "B",   "net": "GND"},
+    {"comp": "M_INP",    "pin": "G",   "net": "inp_net"},
+    {"comp": "M_INP",    "pin": "D",   "net": "sp_net"},
+    {"comp": "M_INM",    "pin": "S",   "net": "tail"},
+    {"comp": "M_INM",    "pin": "B",   "net": "GND"},
+    {"comp": "M_INM",    "pin": "G",   "net": "inm_net"},
+    {"comp": "M_INM",    "pin": "D",   "net": "sm_net"},
+    {"comp": "M_INV_P",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_INV_P",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_INV_P",  "pin": "G",   "net": "out_p"},
+    {"comp": "M_INV_P",  "pin": "D",   "net": "sp_net"},
+    {"comp": "M_INV_N",  "pin": "S",   "net": "sp_net"},
+    {"comp": "M_INV_N",  "pin": "B",   "net": "GND"},
+    {"comp": "M_INV_N",  "pin": "G",   "net": "out_p"},
+    {"comp": "M_INV_N",  "pin": "D",   "net": "GND"},
+    {"comp": "M_INV_P2", "pin": "S",   "net": "VDD"},
+    {"comp": "M_INV_P2", "pin": "B",   "net": "VDD"},
+    {"comp": "M_INV_P2", "pin": "G",   "net": "out_m"},
+    {"comp": "M_INV_P2", "pin": "D",   "net": "sm_net"},
+    {"comp": "M_INV_N2", "pin": "S",   "net": "sm_net"},
+    {"comp": "M_INV_N2", "pin": "B",   "net": "GND"},
+    {"comp": "M_INV_N2", "pin": "G",   "net": "out_m"},
+    {"comp": "M_INV_N2", "pin": "D",   "net": "GND"},
+    {"comp": "M_RST_P",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_RST_P",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_RST_P",  "pin": "G",   "net": "CLK"},
+    {"comp": "M_RST_P",  "pin": "D",   "net": "out_p"},
+    {"comp": "M_RST_N",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_RST_N",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_RST_N",  "pin": "G",   "net": "CLK"},
+    {"comp": "M_RST_N",  "pin": "D",   "net": "out_m"},
+    {"comp": "P_INP",    "pin": "IO",  "net": "inp_net"},
+    {"comp": "P_INM",    "pin": "IO",  "net": "inm_net"},
+    {"comp": "P_CLK",    "pin": "IO",  "net": "CLK"},
+    {"comp": "P_OUTP",   "pin": "IO",  "net": "out_p"},
+    {"comp": "P_OUTM",   "pin": "IO",  "net": "out_m"}
+  ],
+
+  "sizing_notes": {
+    "M_INP":  "Input NMOS — differential current imbalance starts regeneration; wider = less input offset.",
+    "M_INM":  "Input NMOS — must match M_INP; mismatch is the primary source of random offset.",
+    "M_CLK":  "Tail NMOS — enables evaluation on rising CLK; size for sufficient tail current.",
+    "M_RST_P":"Reset PMOS — resets out_p to VDD on CLK=0; must be weak enough not to fight regeneration.",
+    "M_RST_N":"Reset PMOS — resets out_m to VDD on CLK=0."
+  },
+
+  "kg_nodes": [
+    {"id": "StrongARM Comparator","type": "Circuit Block",     "description": "Dynamic regenerative latch comparator with zero static power."},
+    {"id": "Regeneration",        "type": "Mechanism",         "description": "Positive feedback amplification that resolves a small differential to full swing."},
+    {"id": "Input Offset",        "type": "Metric / Constraint","description": "Systematic or random voltage offset at which the comparator switches."}
+  ],
+  "kg_edges": [
+    {"source": "StrongARM Comparator","relation": "uses",        "target": "Cross-Coupled Latch"},
+    {"source": "StrongARM Comparator","relation": "uses",        "target": "Regeneration"},
+    {"source": "StrongARM Comparator","relation": "verified by", "target": "Input Offset"},
+    {"source": "Regeneration",        "relation": "depends on", "target": "Propagation Delay"}
+  ]
+}

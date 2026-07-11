@@ -1,0 +1,107 @@
+{
+  "family": "Differential Pair",
+  "variant": "Basic",
+  "canonical": "Differential Pair",
+  "name": "NMOS Differential Pair with Active PMOS Mirror Load",
+  "description": "5-transistor differential amplifier. NMOS input pair (M_IN1, M_IN2) amplifies the difference signal. PMOS current mirror load (M_L1 diode-connected, M_L2 mirror) converts differential current to single-ended output. Tail NMOS (M_TAIL) provides high-impedance bias current. Foundation of most OTA and op-amp topologies.",
+  "category": "Analog",
+  "technology": ["SKY130"],
+  "keywords": ["differential pair", "diff pair", "differential amplifier", "opamp input stage", "diff amp", "differential"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "Low Leakage": {
+      "w_in": 2.0,
+      "w_load": 3.0,
+      "w_tail": 2.0,
+      "l_val": 0.5,
+      "reasoning": "Longer channels reduce leakage on all branches while maintaining adequate gm."
+    },
+    "High Speed": {
+      "w_in": 4.0,
+      "w_load": 6.0,
+      "w_tail": 4.0,
+      "l_val": 0.15,
+      "reasoning": "Minimum length, wide channels maximise gm and bandwidth."
+    },
+    "High Gain": {
+      "w_in": 5.0,
+      "w_load": 4.0,
+      "w_tail": 3.0,
+      "l_val": 1.0,
+      "reasoning": "Long channel lengths increase ro, boosting voltage gain Av = gm·ro."
+    },
+    "default": {
+      "w_in": 2.0,
+      "w_load": 3.0,
+      "w_tail": 2.0,
+      "l_val": 0.25,
+      "reasoning": "Symmetric balanced sizing for SKY130."
+    }
+  },
+
+  "components": [
+    {"id": "M_IN1",  "type": "NMOS", "w_key": "w_in",   "l_key": "l_val"},
+    {"id": "M_IN2",  "type": "NMOS", "w_key": "w_in",   "l_key": "l_val"},
+    {"id": "M_L1",   "type": "PMOS", "w_key": "w_load", "l_key": "l_val"},
+    {"id": "M_L2",   "type": "PMOS", "w_key": "w_load", "l_key": "l_val"},
+    {"id": "M_TAIL", "type": "NMOS", "w_key": "w_tail", "l_key": "l_val"},
+    {"id": "V_VDD",  "type": "VDD"},
+    {"id": "V_GND",  "type": "GND"},
+    {"id": "P_INP",  "type": "PIN",  "label": "IN_P"},
+    {"id": "P_INM",  "type": "PIN",  "label": "IN_M"},
+    {"id": "P_OUT",  "type": "PIN",  "label": "V_OUT"},
+    {"id": "P_VBIAS","type": "PIN",  "label": "V_BIAS"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",  "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",  "pin": "GND", "net": "GND"},
+    {"comp": "M_L1",   "pin": "S",   "net": "VDD"},
+    {"comp": "M_L1",   "pin": "B",   "net": "VDD"},
+    {"comp": "M_L1",   "pin": "G",   "net": "load_gate"},
+    {"comp": "M_L1",   "pin": "D",   "net": "load_gate"},
+    {"comp": "M_L2",   "pin": "S",   "net": "VDD"},
+    {"comp": "M_L2",   "pin": "B",   "net": "VDD"},
+    {"comp": "M_L2",   "pin": "G",   "net": "load_gate"},
+    {"comp": "M_L2",   "pin": "D",   "net": "out_net"},
+    {"comp": "M_IN1",  "pin": "D",   "net": "load_gate"},
+    {"comp": "M_IN1",  "pin": "G",   "net": "inp_net"},
+    {"comp": "M_IN1",  "pin": "S",   "net": "tail_node"},
+    {"comp": "M_IN1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_IN2",  "pin": "D",   "net": "out_net"},
+    {"comp": "M_IN2",  "pin": "G",   "net": "inm_net"},
+    {"comp": "M_IN2",  "pin": "S",   "net": "tail_node"},
+    {"comp": "M_IN2",  "pin": "B",   "net": "GND"},
+    {"comp": "M_TAIL", "pin": "D",   "net": "tail_node"},
+    {"comp": "M_TAIL", "pin": "G",   "net": "vbias_net"},
+    {"comp": "M_TAIL", "pin": "S",   "net": "GND"},
+    {"comp": "M_TAIL", "pin": "B",   "net": "GND"},
+    {"comp": "P_INP",  "pin": "IO",  "net": "inp_net"},
+    {"comp": "P_INM",  "pin": "IO",  "net": "inm_net"},
+    {"comp": "P_OUT",  "pin": "IO",  "net": "out_net"},
+    {"comp": "P_VBIAS","pin": "IO",  "net": "vbias_net"}
+  ],
+
+  "sizing_notes": {
+    "M_IN1": "Input NMOS — wider channels maximise gm and thus gain.",
+    "M_IN2": "Input NMOS — must match M_IN1 exactly; mismatch creates input-referred offset.",
+    "M_L1":  "Diode-connected PMOS load — sets the gate voltage shared with M_L2.",
+    "M_L2":  "Mirror PMOS load — replicates M_L1 current into output node, converting differential to single-ended.",
+    "M_TAIL":"Tail NMOS current source — biased by V_BIAS; sized twice the input pair width to carry total tail current."
+  },
+
+  "kg_nodes": [
+    {"id": "Differential Pair",    "type": "Circuit Block",     "description": "Symmetrical transistor pair amplifying difference signals."},
+    {"id": "Common Mode Rejection","type": "Metric / Constraint","description": "Suppression ratio of common-mode noise vs differential signal."},
+    {"id": "Active Load",          "type": "Subsystem",         "description": "PMOS mirror configuration acting as high-impedance load."},
+    {"id": "Tail Current Source",  "type": "Subsystem",         "description": "NMOS current sink holding total branch current constant."}
+  ],
+  "kg_edges": [
+    {"source": "Differential Pair", "relation": "uses",        "target": "Active Load"},
+    {"source": "Differential Pair", "relation": "uses",        "target": "Tail Current Source"},
+    {"source": "Tail Current Source","relation": "composed of","target": "Current Mirror"},
+    {"source": "Differential Pair", "relation": "verified by", "target": "Common Mode Rejection"}
+  ]
+}

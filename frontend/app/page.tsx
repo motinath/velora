@@ -567,7 +567,10 @@ export default function Home() {
   };
 
   const finishGeneration = async () => {
-    const compiledPrompt = `${prompt} VDD=${vddSlider}V optimized for ${optimization}.`;
+    // Put the user's raw prompt first so the topology keyword matcher sees it
+    // clearly before any appended context. E.g. "Design a 9T SRAM" must not
+    // be diluted by trailing words that could match a different topology.
+    const compiledPrompt = `${prompt} VDD=${vddSlider}V optimization=${optimization}`;
     try {
       const design = await api.generateDesign(selectedProjectId!, compiledPrompt);
       setDesigns([design, ...designs]);

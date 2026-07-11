@@ -1,0 +1,74 @@
+{
+  "family": "Current Mirror",
+  "variant": "Basic",
+  "canonical": "Current Mirror",
+  "name": "Basic NMOS Current Mirror",
+  "description": "Two-transistor diode-connected reference current mirror. M_REF is diode-connected (gate tied to drain), establishing a gate voltage that M_MIR replicates to copy the reference current. 1:1 ratio. Output resistance limited by channel-length modulation.",
+  "category": "Analog",
+  "technology": ["SKY130"],
+  "keywords": ["current mirror", "mirror", "bias mirror", "nmos mirror", "basic mirror", "simple mirror"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "Low Leakage": {
+      "w_val": 2.0,
+      "l_val": 1.0,
+      "reasoning": "Increased channel dimensions minimise drain-source subthreshold leakage and reduce channel-length modulation."
+    },
+    "High Precision": {
+      "w_val": 4.0,
+      "l_val": 2.0,
+      "reasoning": "Long channel suppresses channel-length modulation (λ) mismatch; wider channels improve matching."
+    },
+    "High Speed": {
+      "w_val": 2.0,
+      "l_val": 0.15,
+      "reasoning": "Minimum length for fastest settling; precision reduced but bandwidth maximised."
+    },
+    "default": {
+      "w_val": 1.0,
+      "l_val": 0.5,
+      "reasoning": "Balanced sizing: adequate precision with reasonable area."
+    }
+  },
+
+  "components": [
+    {"id": "M_REF",  "type": "NMOS", "w_key": "w_val", "l_key": "l_val"},
+    {"id": "M_MIR",  "type": "NMOS", "w_key": "w_val", "l_key": "l_val"},
+    {"id": "V_VDD",  "type": "VDD"},
+    {"id": "V_GND",  "type": "GND"},
+    {"id": "P_IREF", "type": "PIN",  "label": "I_REF"},
+    {"id": "P_IOUT", "type": "PIN",  "label": "I_OUT"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",  "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",  "pin": "GND", "net": "GND"},
+    {"comp": "M_REF",  "pin": "S",   "net": "GND"},
+    {"comp": "M_REF",  "pin": "B",   "net": "GND"},
+    {"comp": "M_REF",  "pin": "D",   "net": "gate_net"},
+    {"comp": "M_REF",  "pin": "G",   "net": "gate_net"},
+    {"comp": "M_MIR",  "pin": "S",   "net": "GND"},
+    {"comp": "M_MIR",  "pin": "B",   "net": "GND"},
+    {"comp": "M_MIR",  "pin": "D",   "net": "out_net"},
+    {"comp": "M_MIR",  "pin": "G",   "net": "gate_net"},
+    {"comp": "P_IREF", "pin": "IO",  "net": "gate_net"},
+    {"comp": "P_IOUT", "pin": "IO",  "net": "out_net"}
+  ],
+
+  "sizing_notes": {
+    "M_REF": "Diode-connected reference. Increasing L improves output resistance and matching.",
+    "M_MIR": "Mirror transistor. Must be matched to M_REF for 1:1 accuracy. Use same L and W."
+  },
+
+  "kg_nodes": [
+    {"id": "Current Mirror",         "type": "Circuit Block",    "description": "Matched transistor paths replicating bias current values."},
+    {"id": "Diode Configuration",    "type": "Topology",         "description": "Transistor gate tied to its drain node to create a bias reference."},
+    {"id": "Channel Length Modulation","type": "Physical Effect","description": "Effective channel length variation under VDS fluctuation causing output current error."}
+  ],
+  "kg_edges": [
+    {"source": "Current Mirror",  "relation": "uses",          "target": "Diode Configuration"},
+    {"source": "Current Mirror",  "relation": "susceptible to","target": "Channel Length Modulation"}
+  ]
+}

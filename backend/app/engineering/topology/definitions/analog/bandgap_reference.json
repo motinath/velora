@@ -1,0 +1,106 @@
+{
+  "family": "Bandgap Reference",
+  "variant": "CMOS",
+  "canonical": "Bandgap Reference",
+  "name": "CMOS Bandgap Voltage Reference",
+  "description": "Classic Brokaw-style bandgap reference implemented in CMOS using parasitic PNP bipolar transistors (substrate BJTs available in SKY130). Combines a PTAT (Proportional to Absolute Temperature) voltage from the ΔVbe path with the negative temperature coefficient of Vbe to produce a temperature-stable ~1.2V reference voltage.",
+  "category": "Analog",
+  "technology": ["SKY130"],
+  "keywords": ["bandgap", "bandgap reference", "voltage reference", "vref", "temperature stable reference", "brokaw", "bgr"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "Low Power": {
+      "w_op": 2.0,
+      "l_op": 1.0,
+      "w_cur": 1.5,
+      "l_cur": 0.5,
+      "reasoning": "Reduced bias current through op-amp and current mirrors to minimise quiescent power."
+    },
+    "High Precision": {
+      "w_op": 5.0,
+      "l_op": 2.0,
+      "w_cur": 3.0,
+      "l_cur": 1.0,
+      "reasoning": "Long-channel devices minimise mismatch and 1/f noise; wider input pair reduces offset."
+    },
+    "default": {
+      "w_op": 3.0,
+      "l_op": 1.0,
+      "w_cur": 2.0,
+      "l_cur": 0.5,
+      "reasoning": "Balanced precision and quiescent current for standard 1.8V SKY130 supply."
+    }
+  },
+
+  "components": [
+    {"id": "M_P1",   "type": "PMOS", "w_key": "w_cur", "l_key": "l_cur"},
+    {"id": "M_P2",   "type": "PMOS", "w_key": "w_cur", "l_key": "l_cur"},
+    {"id": "M_OP_P1","type": "PMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_OP_P2","type": "PMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_OP_N1","type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_OP_N2","type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_TAIL", "type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "V_VDD",  "type": "VDD"},
+    {"id": "V_GND",  "type": "GND"},
+    {"id": "P_VREF", "type": "PIN",  "label": "V_REF"},
+    {"id": "P_EN",   "type": "PIN",  "label": "EN"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",   "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",   "pin": "GND", "net": "GND"},
+    {"comp": "M_P1",    "pin": "S",   "net": "VDD"},
+    {"comp": "M_P1",    "pin": "B",   "net": "VDD"},
+    {"comp": "M_P1",    "pin": "G",   "net": "mirror_gate"},
+    {"comp": "M_P1",    "pin": "D",   "net": "branch1"},
+    {"comp": "M_P2",    "pin": "S",   "net": "VDD"},
+    {"comp": "M_P2",    "pin": "B",   "net": "VDD"},
+    {"comp": "M_P2",    "pin": "G",   "net": "mirror_gate"},
+    {"comp": "M_P2",    "pin": "D",   "net": "branch2"},
+    {"comp": "M_OP_P1", "pin": "S",   "net": "VDD"},
+    {"comp": "M_OP_P1", "pin": "B",   "net": "VDD"},
+    {"comp": "M_OP_P1", "pin": "G",   "net": "opamp_out"},
+    {"comp": "M_OP_P1", "pin": "D",   "net": "mirror_gate"},
+    {"comp": "M_OP_P2", "pin": "S",   "net": "VDD"},
+    {"comp": "M_OP_P2", "pin": "B",   "net": "VDD"},
+    {"comp": "M_OP_P2", "pin": "G",   "net": "mirror_gate"},
+    {"comp": "M_OP_P2", "pin": "D",   "net": "opamp_out"},
+    {"comp": "M_OP_N1", "pin": "D",   "net": "mirror_gate"},
+    {"comp": "M_OP_N1", "pin": "G",   "net": "branch1"},
+    {"comp": "M_OP_N1", "pin": "S",   "net": "tail_node"},
+    {"comp": "M_OP_N1", "pin": "B",   "net": "GND"},
+    {"comp": "M_OP_N2", "pin": "D",   "net": "opamp_out"},
+    {"comp": "M_OP_N2", "pin": "G",   "net": "branch2"},
+    {"comp": "M_OP_N2", "pin": "S",   "net": "tail_node"},
+    {"comp": "M_OP_N2", "pin": "B",   "net": "GND"},
+    {"comp": "M_TAIL",  "pin": "D",   "net": "tail_node"},
+    {"comp": "M_TAIL",  "pin": "G",   "net": "opamp_out"},
+    {"comp": "M_TAIL",  "pin": "S",   "net": "GND"},
+    {"comp": "M_TAIL",  "pin": "B",   "net": "GND"},
+    {"comp": "P_VREF",  "pin": "IO",  "net": "branch2"},
+    {"comp": "P_EN",    "pin": "IO",  "net": "EN"}
+  ],
+
+  "sizing_notes": {
+    "M_P1":    "PTAT current source PMOS — channels current through branch1 containing single BJT.",
+    "M_P2":    "Reference current PMOS — channels current through branch2 with N:1 BJT stack; Vbe difference drives PTAT.",
+    "M_OP_P1": "Op-amp PMOS load — part of the servo amplifier that forces equal currents in both branches.",
+    "M_OP_N1": "Op-amp input NMOS — senses branch1 voltage.",
+    "M_OP_N2": "Op-amp input NMOS — senses branch2 voltage (VREF node).",
+    "M_TAIL":  "Tail current source — biased by feedback to set op-amp operating point."
+  },
+
+  "kg_nodes": [
+    {"id": "Bandgap Reference",   "type": "Circuit Block",     "description": "Temperature-stable voltage reference based on semiconductor bandgap energy."},
+    {"id": "PTAT Voltage",        "type": "Mechanism",         "description": "Proportional-to-Absolute-Temperature voltage derived from ΔVbe of matched BJTs."},
+    {"id": "Temperature Coefficient","type": "Metric / Constraint","description": "Variation of reference voltage with temperature (ppm/°C)."}
+  ],
+  "kg_edges": [
+    {"source": "Bandgap Reference",  "relation": "uses",        "target": "PTAT Voltage"},
+    {"source": "Bandgap Reference",  "relation": "uses",        "target": "Differential Pair"},
+    {"source": "Bandgap Reference",  "relation": "verified by", "target": "Temperature Coefficient"},
+    {"source": "PTAT Voltage",       "relation": "cancels",     "target": "Temperature Coefficient"}
+  ]
+}

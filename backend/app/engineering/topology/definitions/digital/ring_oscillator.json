@@ -1,0 +1,68 @@
+{
+  "family": "Ring Oscillator",
+  "variant": "CMOS",
+  "canonical": "Ring Oscillator",
+  "name": "CMOS Ring Oscillator — Odd-Stage Inverter Loop",
+  "description": "Odd-stage feedback inverter chain. Each stage is a CMOS inverter (PMOS + NMOS). The feedback from the last stage to the first creates 360° phase shift (each inverter contributes 180°, the odd count ensures net inversion). Oscillation frequency = 1/(2·N·t_pd) where N is the stage count and t_pd is the per-stage propagation delay.",
+  "category": "Digital",
+  "technology": ["SKY130"],
+  "keywords": ["ring oscillator", "ring osc", "oscillator", "clock gen", "clock generator", "ring", "vco ring"],
+  "dynamic": true,
+  "dynamic_strategy": "ring_oscillator_expand",
+
+  "optimizations": {
+    "Low Leakage": {
+      "w_p": 0.54,
+      "w_n": 0.36,
+      "l_val": 0.35,
+      "reasoning": "Increased channel length L=0.35um reduces subthreshold leakage; frequency decreases due to higher t_pd."
+    },
+    "Low Power": {
+      "w_p": 0.54,
+      "w_n": 0.36,
+      "l_val": 0.35,
+      "reasoning": "Longer channels and standard widths: minimal switching power, acceptable jitter for clock reference use."
+    },
+    "High Speed": {
+      "w_p": 1.62,
+      "w_n": 1.08,
+      "l_val": 0.15,
+      "reasoning": "Minimum length L=0.15um and wide channels (3x standard) minimise t_pd for maximum oscillation frequency."
+    },
+    "default": {
+      "w_p": 0.54,
+      "w_n": 0.36,
+      "l_val": 0.15,
+      "reasoning": "Standard SKY130 inverter sizing; symmetric rise/fall times, good jitter performance."
+    }
+  },
+
+  "base_components": [
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_OUT", "type": "PIN", "label": "OSC_OUT"}
+  ],
+  "base_connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"}
+  ],
+
+  "sizing_notes": {
+    "M_P{i}": "Inverter PMOS stage i — wider than NMOS to compensate lower hole mobility; ensures symmetric duty cycle.",
+    "M_N{i}": "Inverter NMOS stage i — baseline reference width; propagation delay is primarily determined by this device."
+  },
+
+  "kg_nodes": [
+    {"id": "Ring Oscillator",      "type": "Circuit Block",     "description": "Odd-stage feedback loop generating self-sustaining clock signals."},
+    {"id": "Oscillation Frequency","type": "Metric / Constraint","description": "Cycle frequency determined by stage count and per-stage delay."},
+    {"id": "Propagation Delay",    "type": "Metric / Constraint","description": "Transistor charge/discharge time per inverter stage."},
+    {"id": "Jitter",               "type": "Metric / Constraint","description": "Frequency cycle deviation caused by supply and substrate noise."}
+  ],
+  "kg_edges": [
+    {"source": "Ring Oscillator",      "relation": "composed of", "target": "Inverter"},
+    {"source": "Ring Oscillator",      "relation": "depends on",  "target": "Propagation Delay"},
+    {"source": "Oscillation Frequency","relation": "limited by",  "target": "Propagation Delay"},
+    {"source": "Ring Oscillator",      "relation": "verified by", "target": "Oscillation Frequency"},
+    {"source": "Oscillation Frequency","relation": "affects",     "target": "Jitter"}
+  ]
+}

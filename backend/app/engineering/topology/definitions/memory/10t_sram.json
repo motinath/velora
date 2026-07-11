@@ -1,0 +1,138 @@
+{
+  "family": "SRAM",
+  "variant": "10T",
+  "canonical": "10T SRAM",
+  "name": "10T SRAM Cell — Sub-threshold / Near-Vt with Differential Read Port",
+  "description": "10-transistor SRAM optimised for sub-threshold and near-Vt operation. Combines the 8T separate read port (eliminating read disturb) with a single write-assist PMOS (M_WA) that boosts the internal node during write, restoring write margin lost at low VDD. The result is a cell that functions correctly from 0.4V to 1.2V.",
+  "category": "Memory",
+  "technology": ["SKY130"],
+  "keywords": ["10t sram", "10t", "10 transistor sram", "sub threshold sram", "near vt sram", "ultra low voltage sram", "sram 10t"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "Ultra Low Power": {
+      "l_val": 0.50,
+      "w_pd": 0.54,
+      "w_pu": 0.36,
+      "w_pg": 0.40,
+      "w_rd": 0.36,
+      "w_wa": 0.28,
+      "reasoning": "Near-Vt operation. Long channels suppress leakage; write-assist PMOS compensates write margin loss at 0.4V VDD."
+    },
+    "Low Leakage": {
+      "l_val": 0.35,
+      "w_pd": 0.60,
+      "w_pu": 0.40,
+      "w_pg": 0.45,
+      "w_rd": 0.42,
+      "w_wa": 0.36,
+      "reasoning": "Balanced leakage suppression with sufficient write assist strength."
+    },
+    "default": {
+      "l_val": 0.25,
+      "w_pd": 0.54,
+      "w_pu": 0.36,
+      "w_pg": 0.40,
+      "w_rd": 0.36,
+      "w_wa": 0.28,
+      "reasoning": "Standard near-Vt sizing. Write-assist PMOS is weak to avoid contention with pull-up."
+    }
+  },
+
+  "components": [
+    {"id": "M_PU1",  "type": "PMOS", "w_key": "w_pu",  "l_key": "l_val"},
+    {"id": "M_PD1",  "type": "NMOS", "w_key": "w_pd",  "l_key": "l_val"},
+    {"id": "M_PU2",  "type": "PMOS", "w_key": "w_pu",  "l_key": "l_val"},
+    {"id": "M_PD2",  "type": "NMOS", "w_key": "w_pd",  "l_key": "l_val"},
+    {"id": "M_PG1",  "type": "NMOS", "w_key": "w_pg",  "l_key": "l_val"},
+    {"id": "M_PG2",  "type": "NMOS", "w_key": "w_pg",  "l_key": "l_val"},
+    {"id": "M_RD1",  "type": "NMOS", "w_key": "w_rd",  "l_key": "l_val"},
+    {"id": "M_RD2",  "type": "NMOS", "w_key": "w_rd",  "l_key": "l_val"},
+    {"id": "M_WA1",  "type": "PMOS", "w_key": "w_wa",  "l_key": "l_val"},
+    {"id": "M_WA2",  "type": "PMOS", "w_key": "w_wa",  "l_key": "l_val"},
+    {"id": "V_VDD",  "type": "VDD"},
+    {"id": "V_GND",  "type": "GND"},
+    {"id": "P_WL",   "type": "PIN",  "label": "WL"},
+    {"id": "P_BL",   "type": "PIN",  "label": "BL"},
+    {"id": "P_BLB",  "type": "PIN",  "label": "BLB"},
+    {"id": "P_RWL",  "type": "PIN",  "label": "RWL"},
+    {"id": "P_RBL",  "type": "PIN",  "label": "RBL"},
+    {"id": "P_WAE",  "type": "PIN",  "label": "WAE"},
+    {"id": "P_Q",    "type": "PIN",  "label": "Q"},
+    {"id": "P_QB",   "type": "PIN",  "label": "QB"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",  "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",  "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU1",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU1",  "pin": "D",   "net": "Q"},
+    {"comp": "M_PU1",  "pin": "G",   "net": "QB"},
+    {"comp": "M_PD1",  "pin": "S",   "net": "GND"},
+    {"comp": "M_PD1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PD1",  "pin": "D",   "net": "Q"},
+    {"comp": "M_PD1",  "pin": "G",   "net": "QB"},
+    {"comp": "M_PU2",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU2",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU2",  "pin": "D",   "net": "QB"},
+    {"comp": "M_PU2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_PD2",  "pin": "S",   "net": "GND"},
+    {"comp": "M_PD2",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PD2",  "pin": "D",   "net": "QB"},
+    {"comp": "M_PD2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_PG1",  "pin": "D",   "net": "BL"},
+    {"comp": "M_PG1",  "pin": "G",   "net": "WL"},
+    {"comp": "M_PG1",  "pin": "S",   "net": "Q"},
+    {"comp": "M_PG1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PG2",  "pin": "D",   "net": "BLB"},
+    {"comp": "M_PG2",  "pin": "G",   "net": "WL"},
+    {"comp": "M_PG2",  "pin": "S",   "net": "QB"},
+    {"comp": "M_PG2",  "pin": "B",   "net": "GND"},
+    {"comp": "M_RD1",  "pin": "G",   "net": "RWL"},
+    {"comp": "M_RD1",  "pin": "D",   "net": "RBL"},
+    {"comp": "M_RD1",  "pin": "S",   "net": "rd_mid"},
+    {"comp": "M_RD1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_RD2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_RD2",  "pin": "D",   "net": "rd_mid"},
+    {"comp": "M_RD2",  "pin": "S",   "net": "GND"},
+    {"comp": "M_RD2",  "pin": "B",   "net": "GND"},
+    {"comp": "M_WA1",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_WA1",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_WA1",  "pin": "G",   "net": "WAE"},
+    {"comp": "M_WA1",  "pin": "D",   "net": "Q"},
+    {"comp": "M_WA2",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_WA2",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_WA2",  "pin": "G",   "net": "WAE"},
+    {"comp": "M_WA2",  "pin": "D",   "net": "QB"},
+    {"comp": "P_WL",   "pin": "IO",  "net": "WL"},
+    {"comp": "P_BL",   "pin": "IO",  "net": "BL"},
+    {"comp": "P_BLB",  "pin": "IO",  "net": "BLB"},
+    {"comp": "P_RWL",  "pin": "IO",  "net": "RWL"},
+    {"comp": "P_RBL",  "pin": "IO",  "net": "RBL"},
+    {"comp": "P_WAE",  "pin": "IO",  "net": "WAE"},
+    {"comp": "P_Q",    "pin": "IO",  "net": "Q"},
+    {"comp": "P_QB",   "pin": "IO",  "net": "QB"}
+  ],
+
+  "sizing_notes": {
+    "M_WA1": "Write-assist PMOS — activated (gate LOW) during write; pulls the node being written HIGH to overcome near-Vt write margin loss.",
+    "M_WA2": "Write-assist PMOS — complementary side; sized weakly to avoid fighting the write-access path.",
+    "M_RD1": "Read-access NMOS — same role as 8T read port, isolates storage node during read.",
+    "M_RD2": "Read-driver NMOS — gate driven by Q; discharges RBL when Q=1."
+  },
+
+  "kg_nodes": [
+    {"id": "10T SRAM",        "type": "Circuit Block",  "description": "10-transistor sub-threshold SRAM combining separate read port with write-assist PMOS."},
+    {"id": "Write Assist",    "type": "Technique",      "description": "Technique that boosts internal storage nodes during write to restore write margin at low VDD."},
+    {"id": "Sub-threshold",   "type": "Operating Regime","description": "Operation below Vt where currents are exponentially dependent on gate voltage."}
+  ],
+  "kg_edges": [
+    {"source": "10T SRAM",   "relation": "extends",     "target": "8T SRAM"},
+    {"source": "10T SRAM",   "relation": "implements",  "target": "Write Assist"},
+    {"source": "10T SRAM",   "relation": "optimised for","target": "Sub-threshold"},
+    {"source": "10T SRAM",   "relation": "verified by", "target": "Static Noise Margin"},
+    {"source": "Write Assist","relation": "improves",   "target": "Static Noise Margin"}
+  ]
+}

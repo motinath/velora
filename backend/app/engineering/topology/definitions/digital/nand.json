@@ -1,0 +1,86 @@
+{
+  "family": "Logic Gate",
+  "variant": "NAND2",
+  "canonical": "NAND Gate",
+  "name": "CMOS 2-Input NAND Gate",
+  "description": "Static CMOS 2-input NAND gate. Pull-up network: two parallel PMOS devices (M_PU1, M_PU2) — output HIGH when either input is LOW. Pull-down network: two series NMOS devices (M_ND1, M_ND2) — output LOW only when both inputs are HIGH. NAND is the universal gate; preferred over NOR in CMOS because the series NMOS stack has higher drive strength than equivalent series PMOS.",
+  "category": "Digital",
+  "technology": ["SKY130"],
+  "keywords": ["nand", "nand gate", "nand2", "2-input nand", "two input nand", "universal gate"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "High Speed": {
+      "w_pu": 0.72,
+      "w_nd": 1.08,
+      "l_val": 0.15,
+      "reasoning": "Series NMOS sized 2x to maintain drive strength equal to a single NMOS; PMOS at minimum width for speed."
+    },
+    "Low Power": {
+      "w_pu": 0.54,
+      "w_nd": 0.72,
+      "l_val": 0.35,
+      "reasoning": "Longer channels reduce leakage; acceptable for static control logic paths."
+    },
+    "default": {
+      "w_pu": 0.54,
+      "w_nd": 0.84,
+      "l_val": 0.15,
+      "reasoning": "Series NMOS W = 1.5x single NMOS to compensate for series resistance penalty."
+    }
+  },
+
+  "components": [
+    {"id": "M_PU1", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PU2", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_ND1", "type": "NMOS", "w_key": "w_nd", "l_key": "l_val"},
+    {"id": "M_ND2", "type": "NMOS", "w_key": "w_nd", "l_key": "l_val"},
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_A",   "type": "PIN",  "label": "A"},
+    {"id": "P_B",   "type": "PIN",  "label": "B"},
+    {"id": "P_Y",   "type": "PIN",  "label": "Y"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1", "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU1", "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU1", "pin": "G",   "net": "a_net"},
+    {"comp": "M_PU1", "pin": "D",   "net": "y_net"},
+    {"comp": "M_PU2", "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU2", "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU2", "pin": "G",   "net": "b_net"},
+    {"comp": "M_PU2", "pin": "D",   "net": "y_net"},
+    {"comp": "M_ND1", "pin": "D",   "net": "y_net"},
+    {"comp": "M_ND1", "pin": "G",   "net": "a_net"},
+    {"comp": "M_ND1", "pin": "S",   "net": "mid_net"},
+    {"comp": "M_ND1", "pin": "B",   "net": "GND"},
+    {"comp": "M_ND2", "pin": "D",   "net": "mid_net"},
+    {"comp": "M_ND2", "pin": "G",   "net": "b_net"},
+    {"comp": "M_ND2", "pin": "S",   "net": "GND"},
+    {"comp": "M_ND2", "pin": "B",   "net": "GND"},
+    {"comp": "P_A",   "pin": "IO",  "net": "a_net"},
+    {"comp": "P_B",   "pin": "IO",  "net": "b_net"},
+    {"comp": "P_Y",   "pin": "IO",  "net": "y_net"}
+  ],
+
+  "sizing_notes": {
+    "M_ND1": "Series pull-down NMOS — top of stack (connected to output); sized wider than single NMOS due to series stacking.",
+    "M_ND2": "Series pull-down NMOS — bottom of stack (connected to GND); same sizing as M_ND1 for symmetric delay.",
+    "M_PU1": "Parallel pull-up PMOS — for input A; each PMOS sees full VDD, no stacking penalty.",
+    "M_PU2": "Parallel pull-up PMOS — for input B."
+  },
+
+  "kg_nodes": [
+    {"id": "NAND Gate",        "type": "Logic Gate",        "description": "2-input CMOS NAND universal logic gate."},
+    {"id": "Series Stack",     "type": "Design Constraint", "description": "NMOS pull-down series connection requires wider devices to match single-transistor drive strength."}
+  ],
+  "kg_edges": [
+    {"source": "NAND Gate",  "relation": "composed of",  "target": "Inverter"},
+    {"source": "NAND Gate",  "relation": "constrained by","target": "Series Stack"},
+    {"source": "NAND Gate",  "relation": "depends on",   "target": "Propagation Delay"}
+  ]
+}

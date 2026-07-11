@@ -1,0 +1,121 @@
+{
+  "family": "SRAM",
+  "variant": "8T",
+  "canonical": "8T SRAM",
+  "name": "8T SRAM Cell — Separate Read Port",
+  "description": "8-transistor SRAM cell with an isolated single-ended read port (M_RD1, M_RD2) that eliminates read-disturb by decoupling the read path from the storage nodes. Write path remains identical to 6T. Area overhead ~25% over 6T but read SNM improves dramatically.",
+  "category": "Memory",
+  "technology": ["SKY130"],
+  "keywords": ["8t sram", "8t", "8 transistor sram", "read disturb free sram", "sram 8t"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "Low Leakage": {
+      "l_val": 0.25,
+      "w_pd": 0.60,
+      "w_pu": 0.40,
+      "w_pg": 0.45,
+      "w_rd": 0.36,
+      "reasoning": "Longer channel lengths reduce standby leakage on all six core transistors. Read port sized conservatively."
+    },
+    "High Speed": {
+      "l_val": 0.15,
+      "w_pd": 0.84,
+      "w_pu": 0.54,
+      "w_pg": 0.60,
+      "w_rd": 0.72,
+      "reasoning": "Minimum length and wide channels for fast read via the dedicated read port."
+    },
+    "default": {
+      "l_val": 0.15,
+      "w_pd": 0.54,
+      "w_pu": 0.36,
+      "w_pg": 0.40,
+      "w_rd": 0.36,
+      "reasoning": "Standard sizing. Read port NMOS sized to drive bitline within one cycle."
+    }
+  },
+
+  "components": [
+    {"id": "M_PU1",  "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PD1",  "type": "NMOS", "w_key": "w_pd", "l_key": "l_val"},
+    {"id": "M_PU2",  "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PD2",  "type": "NMOS", "w_key": "w_pd", "l_key": "l_val"},
+    {"id": "M_PG1",  "type": "NMOS", "w_key": "w_pg", "l_key": "l_val"},
+    {"id": "M_PG2",  "type": "NMOS", "w_key": "w_pg", "l_key": "l_val"},
+    {"id": "M_RD1",  "type": "NMOS", "w_key": "w_rd", "l_key": "l_val"},
+    {"id": "M_RD2",  "type": "NMOS", "w_key": "w_rd", "l_key": "l_val"},
+    {"id": "V_VDD",  "type": "VDD"},
+    {"id": "V_GND",  "type": "GND"},
+    {"id": "P_WL",   "type": "PIN", "label": "WL"},
+    {"id": "P_BL",   "type": "PIN", "label": "BL"},
+    {"id": "P_BLB",  "type": "PIN", "label": "BLB"},
+    {"id": "P_RWL",  "type": "PIN", "label": "RWL"},
+    {"id": "P_RBL",  "type": "PIN", "label": "RBL"},
+    {"id": "P_Q",    "type": "PIN", "label": "Q"},
+    {"id": "P_QB",   "type": "PIN", "label": "QB"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",  "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",  "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU1",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU1",  "pin": "D",   "net": "Q"},
+    {"comp": "M_PU1",  "pin": "G",   "net": "QB"},
+    {"comp": "M_PD1",  "pin": "S",   "net": "GND"},
+    {"comp": "M_PD1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PD1",  "pin": "D",   "net": "Q"},
+    {"comp": "M_PD1",  "pin": "G",   "net": "QB"},
+    {"comp": "M_PU2",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU2",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU2",  "pin": "D",   "net": "QB"},
+    {"comp": "M_PU2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_PD2",  "pin": "S",   "net": "GND"},
+    {"comp": "M_PD2",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PD2",  "pin": "D",   "net": "QB"},
+    {"comp": "M_PD2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_PG1",  "pin": "D",   "net": "BL"},
+    {"comp": "M_PG1",  "pin": "G",   "net": "WL"},
+    {"comp": "M_PG1",  "pin": "S",   "net": "Q"},
+    {"comp": "M_PG1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PG2",  "pin": "D",   "net": "BLB"},
+    {"comp": "M_PG2",  "pin": "G",   "net": "WL"},
+    {"comp": "M_PG2",  "pin": "S",   "net": "QB"},
+    {"comp": "M_PG2",  "pin": "B",   "net": "GND"},
+    {"comp": "M_RD1",  "pin": "G",   "net": "RWL"},
+    {"comp": "M_RD1",  "pin": "D",   "net": "RBL"},
+    {"comp": "M_RD1",  "pin": "S",   "net": "rd_mid"},
+    {"comp": "M_RD1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_RD2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_RD2",  "pin": "D",   "net": "rd_mid"},
+    {"comp": "M_RD2",  "pin": "S",   "net": "GND"},
+    {"comp": "M_RD2",  "pin": "B",   "net": "GND"},
+    {"comp": "P_WL",   "pin": "IO",  "net": "WL"},
+    {"comp": "P_BL",   "pin": "IO",  "net": "BL"},
+    {"comp": "P_BLB",  "pin": "IO",  "net": "BLB"},
+    {"comp": "P_RWL",  "pin": "IO",  "net": "RWL"},
+    {"comp": "P_RBL",  "pin": "IO",  "net": "RBL"},
+    {"comp": "P_Q",    "pin": "IO",  "net": "Q"},
+    {"comp": "P_QB",   "pin": "IO",  "net": "QB"}
+  ],
+
+  "sizing_notes": {
+    "M_RD1": "Read-access NMOS — gate driven by separate RWL; isolates storage node from bitline discharge.",
+    "M_RD2": "Read-driver NMOS — gate driven by internal Q; discharges RBL only when Q=1, no disturb."
+  },
+
+  "kg_nodes": [
+    {"id": "8T SRAM",         "type": "Circuit Block",       "description": "8-transistor SRAM with read-disturb-free separate read port."},
+    {"id": "Read Disturb",    "type": "Failure Mode",        "description": "Inadvertent cell flip caused by read bitline discharge through storage node."},
+    {"id": "Separate Read Port","type": "Subsystem",         "description": "Isolated NMOS stack that reads Q without touching the storage node."}
+  ],
+  "kg_edges": [
+    {"source": "8T SRAM",          "relation": "extends",      "target": "6T SRAM"},
+    {"source": "8T SRAM",          "relation": "eliminates",   "target": "Read Disturb"},
+    {"source": "8T SRAM",          "relation": "uses",         "target": "Separate Read Port"},
+    {"source": "8T SRAM",          "relation": "verified by",  "target": "Static Noise Margin"},
+    {"source": "Separate Read Port","relation": "composed of", "target": "Access Gate"}
+  ]
+}

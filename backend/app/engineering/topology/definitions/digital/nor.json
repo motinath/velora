@@ -1,0 +1,85 @@
+{
+  "family": "Logic Gate",
+  "variant": "NOR2",
+  "canonical": "NOR Gate",
+  "name": "CMOS 2-Input NOR Gate",
+  "description": "Static CMOS 2-input NOR gate. Pull-up network: two series PMOS devices (M_PU1, M_PU2) — output HIGH only when both inputs are LOW. Pull-down network: two parallel NMOS devices (M_ND1, M_ND2) — output LOW when either input is HIGH. Note: the series PMOS stack requires wider PMOS to compensate for lower hole mobility, making NOR larger than NAND in CMOS.",
+  "category": "Digital",
+  "technology": ["SKY130"],
+  "keywords": ["nor", "nor gate", "nor2", "2-input nor", "two input nor"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "High Speed": {
+      "w_pu": 2.16,
+      "w_nd": 0.54,
+      "l_val": 0.15,
+      "reasoning": "Series PMOS sized 3x single PMOS width to overcome both hole mobility and stacking penalty."
+    },
+    "Low Power": {
+      "w_pu": 1.08,
+      "w_nd": 0.36,
+      "l_val": 0.35,
+      "reasoning": "Longer channels for leakage reduction; PMOS still oversized to maintain logic margin."
+    },
+    "default": {
+      "w_pu": 1.44,
+      "w_nd": 0.36,
+      "l_val": 0.15,
+      "reasoning": "Series PMOS W = 2x single PMOS (accounts for hole mobility ratio ~2) for balanced t_pHL / t_pLH."
+    }
+  },
+
+  "components": [
+    {"id": "M_PU1", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_PU2", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
+    {"id": "M_ND1", "type": "NMOS", "w_key": "w_nd", "l_key": "l_val"},
+    {"id": "M_ND2", "type": "NMOS", "w_key": "w_nd", "l_key": "l_val"},
+    {"id": "V_VDD", "type": "VDD"},
+    {"id": "V_GND", "type": "GND"},
+    {"id": "P_A",   "type": "PIN",  "label": "A"},
+    {"id": "P_B",   "type": "PIN",  "label": "B"},
+    {"id": "P_Y",   "type": "PIN",  "label": "Y"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1", "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU1", "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU1", "pin": "G",   "net": "a_net"},
+    {"comp": "M_PU1", "pin": "D",   "net": "mid_net"},
+    {"comp": "M_PU2", "pin": "S",   "net": "mid_net"},
+    {"comp": "M_PU2", "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU2", "pin": "G",   "net": "b_net"},
+    {"comp": "M_PU2", "pin": "D",   "net": "y_net"},
+    {"comp": "M_ND1", "pin": "D",   "net": "y_net"},
+    {"comp": "M_ND1", "pin": "G",   "net": "a_net"},
+    {"comp": "M_ND1", "pin": "S",   "net": "GND"},
+    {"comp": "M_ND1", "pin": "B",   "net": "GND"},
+    {"comp": "M_ND2", "pin": "D",   "net": "y_net"},
+    {"comp": "M_ND2", "pin": "G",   "net": "b_net"},
+    {"comp": "M_ND2", "pin": "S",   "net": "GND"},
+    {"comp": "M_ND2", "pin": "B",   "net": "GND"},
+    {"comp": "P_A",   "pin": "IO",  "net": "a_net"},
+    {"comp": "P_B",   "pin": "IO",  "net": "b_net"},
+    {"comp": "P_Y",   "pin": "IO",  "net": "y_net"}
+  ],
+
+  "sizing_notes": {
+    "M_PU1": "Series pull-up PMOS — top of stack; wider than single PMOS to overcome hole mobility + stacking.",
+    "M_PU2": "Series pull-up PMOS — bottom of stack; body terminal connected to VDD to avoid forward-biased junction issues.",
+    "M_ND1": "Parallel pull-down NMOS — for input A; no stacking penalty, standard width.",
+    "M_ND2": "Parallel pull-down NMOS — for input B."
+  },
+
+  "kg_nodes": [
+    {"id": "NOR Gate", "type": "Logic Gate", "description": "2-input CMOS NOR universal logic gate."}
+  ],
+  "kg_edges": [
+    {"source": "NOR Gate", "relation": "composed of",  "target": "Inverter"},
+    {"source": "NOR Gate", "relation": "constrained by","target": "Series Stack"},
+    {"source": "NOR Gate", "relation": "depends on",   "target": "Propagation Delay"}
+  ]
+}

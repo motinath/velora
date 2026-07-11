@@ -1,0 +1,120 @@
+{
+  "family": "SRAM",
+  "variant": "9T",
+  "canonical": "9T SRAM",
+  "name": "9T SRAM Cell — Low-Leakage with Sleep Transistor",
+  "description": "9-transistor SRAM cell that adds a sleep/power-gating NMOS (M_SLP) to the pull-down network of each inverter half. During standby, M_SLP is turned OFF, completely cutting the subthreshold leakage path to GND. Ideal for near-threshold / IoT applications where leakage is the dominant power component.",
+  "category": "Memory",
+  "technology": ["SKY130"],
+  "keywords": ["9t sram", "9t", "9 transistor sram", "sleep transistor sram", "power gated sram", "low leakage sram", "sram 9t"],
+  "dynamic": false,
+  "dynamic_strategy": null,
+
+  "optimizations": {
+    "Low Leakage": {
+      "l_val": 0.35,
+      "w_pd": 0.54,
+      "w_pu": 0.36,
+      "w_pg": 0.40,
+      "w_slp": 0.54,
+      "reasoning": "Long channel sleep transistors (L=0.35um) maximise off-state resistance; core sized at standard ratios."
+    },
+    "Ultra Low Power": {
+      "l_val": 0.50,
+      "w_pd": 0.42,
+      "w_pu": 0.28,
+      "w_pg": 0.36,
+      "w_slp": 0.42,
+      "reasoning": "Near-threshold operation: maximum channel length on all paths cuts both dynamic and leakage power."
+    },
+    "default": {
+      "l_val": 0.25,
+      "w_pd": 0.54,
+      "w_pu": 0.36,
+      "w_pg": 0.40,
+      "w_slp": 0.54,
+      "reasoning": "Balanced sizing; sleep transistor sized equal to pull-down to avoid series resistance bottleneck during write."
+    }
+  },
+
+  "components": [
+    {"id": "M_PU1",  "type": "PMOS", "w_key": "w_pu",  "l_key": "l_val"},
+    {"id": "M_PD1",  "type": "NMOS", "w_key": "w_pd",  "l_key": "l_val"},
+    {"id": "M_SLP1", "type": "NMOS", "w_key": "w_slp", "l_key": "l_val"},
+    {"id": "M_PU2",  "type": "PMOS", "w_key": "w_pu",  "l_key": "l_val"},
+    {"id": "M_PD2",  "type": "NMOS", "w_key": "w_pd",  "l_key": "l_val"},
+    {"id": "M_SLP2", "type": "NMOS", "w_key": "w_slp", "l_key": "l_val"},
+    {"id": "M_PG1",  "type": "NMOS", "w_key": "w_pg",  "l_key": "l_val"},
+    {"id": "M_PG2",  "type": "NMOS", "w_key": "w_pg",  "l_key": "l_val"},
+    {"id": "P_SLP",  "type": "PIN",  "label": "SLP"},
+    {"id": "V_VDD",  "type": "VDD"},
+    {"id": "V_GND",  "type": "GND"},
+    {"id": "P_WL",   "type": "PIN",  "label": "WL"},
+    {"id": "P_BL",   "type": "PIN",  "label": "BL"},
+    {"id": "P_BLB",  "type": "PIN",  "label": "BLB"},
+    {"id": "P_Q",    "type": "PIN",  "label": "Q"},
+    {"id": "P_QB",   "type": "PIN",  "label": "QB"}
+  ],
+
+  "connections": [
+    {"comp": "V_VDD",  "pin": "VDD", "net": "VDD"},
+    {"comp": "V_GND",  "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU1",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU1",  "pin": "D",   "net": "Q"},
+    {"comp": "M_PU1",  "pin": "G",   "net": "QB"},
+    {"comp": "M_PD1",  "pin": "S",   "net": "vss_q"},
+    {"comp": "M_PD1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PD1",  "pin": "D",   "net": "Q"},
+    {"comp": "M_PD1",  "pin": "G",   "net": "QB"},
+    {"comp": "M_SLP1", "pin": "D",   "net": "vss_q"},
+    {"comp": "M_SLP1", "pin": "S",   "net": "GND"},
+    {"comp": "M_SLP1", "pin": "G",   "net": "SLP"},
+    {"comp": "M_SLP1", "pin": "B",   "net": "GND"},
+    {"comp": "M_PU2",  "pin": "S",   "net": "VDD"},
+    {"comp": "M_PU2",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU2",  "pin": "D",   "net": "QB"},
+    {"comp": "M_PU2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_PD2",  "pin": "S",   "net": "vss_qb"},
+    {"comp": "M_PD2",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PD2",  "pin": "D",   "net": "QB"},
+    {"comp": "M_PD2",  "pin": "G",   "net": "Q"},
+    {"comp": "M_SLP2", "pin": "D",   "net": "vss_qb"},
+    {"comp": "M_SLP2", "pin": "S",   "net": "GND"},
+    {"comp": "M_SLP2", "pin": "G",   "net": "SLP"},
+    {"comp": "M_SLP2", "pin": "B",   "net": "GND"},
+    {"comp": "M_PG1",  "pin": "D",   "net": "BL"},
+    {"comp": "M_PG1",  "pin": "G",   "net": "WL"},
+    {"comp": "M_PG1",  "pin": "S",   "net": "Q"},
+    {"comp": "M_PG1",  "pin": "B",   "net": "GND"},
+    {"comp": "M_PG2",  "pin": "D",   "net": "BLB"},
+    {"comp": "M_PG2",  "pin": "G",   "net": "WL"},
+    {"comp": "M_PG2",  "pin": "S",   "net": "QB"},
+    {"comp": "M_PG2",  "pin": "B",   "net": "GND"},
+    {"comp": "P_SLP",  "pin": "IO",  "net": "SLP"},
+    {"comp": "P_WL",   "pin": "IO",  "net": "WL"},
+    {"comp": "P_BL",   "pin": "IO",  "net": "BL"},
+    {"comp": "P_BLB",  "pin": "IO",  "net": "BLB"},
+    {"comp": "P_Q",    "pin": "IO",  "net": "Q"},
+    {"comp": "P_QB",   "pin": "IO",  "net": "QB"}
+  ],
+
+  "sizing_notes": {
+    "M_SLP1": "Sleep NMOS — gate driven by SLP control; OFF in standby to cut leakage path from pull-down to GND.",
+    "M_SLP2": "Sleep NMOS — mirror of M_SLP1 for the complementary latch half.",
+    "M_PD1":  "Pull-down NMOS — series with M_SLP1; write must overcome both devices so Cell Ratio check applies to the series combination."
+  },
+
+  "kg_nodes": [
+    {"id": "9T SRAM",         "type": "Circuit Block",     "description": "9-transistor low-leakage SRAM with power-gating sleep transistors."},
+    {"id": "Sleep Transistor","type": "Power-Gating Device","description": "Series NMOS that cuts the subthreshold leakage path in standby."},
+    {"id": "Power Gating",    "type": "Technique",         "description": "Technique of isolating a circuit block from supply/ground in standby to eliminate leakage."}
+  ],
+  "kg_edges": [
+    {"source": "9T SRAM",          "relation": "extends",     "target": "6T SRAM"},
+    {"source": "9T SRAM",          "relation": "uses",        "target": "Sleep Transistor"},
+    {"source": "9T SRAM",          "relation": "implements",  "target": "Power Gating"},
+    {"source": "9T SRAM",          "relation": "verified by", "target": "Static Noise Margin"},
+    {"source": "Sleep Transistor", "relation": "reduces",     "target": "Static Noise Margin"}
+  ]
+}
