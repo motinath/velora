@@ -133,3 +133,20 @@ class ProjectDetail(ProjectResponse):
     files: List[FileResponse] = []
     chat_sessions: List[ChatSessionResponse] = []
     designs: List[DesignResponse] = []
+
+class LibraryComponentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    technology: str
+    category: str
+    model: Optional[str] = None
+    pins: List[str]
+    parameters: Dict[str, Any]
+    desc: Optional[str] = ""
+    symbol_svg: Optional[str] = ""
+    spice_model: Optional[str] = ""
+    layout_gds_path: Optional[str] = None
+    ai_metadata: Optional[Dict[str, Any]] = None
+    design_constraints: Optional[Dict[str, Any]] = None
+    documentation: Optional[Dict[str, Any]] = None

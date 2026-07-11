@@ -140,3 +140,21 @@ class DesignIntent(Base):
     project = relationship("Project", back_populates="intents")
     design = relationship("Design", back_populates="intents")
     engineer = relationship("User")
+
+class LibraryComponent(Base):
+    __tablename__ = "library_components"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    technology = Column(String, index=True, nullable=False)
+    category = Column(String, index=True, nullable=False)
+    model = Column(String, nullable=True)
+    pins = Column(JSON, nullable=False)
+    parameters = Column(JSON, nullable=False)
+    desc = Column(Text, nullable=True)
+    symbol_svg = Column(Text, nullable=True)
+    spice_model = Column(Text, nullable=True)
+    layout_gds_path = Column(String, nullable=True)
+    ai_metadata = Column(JSON, nullable=True)
+    design_constraints = Column(JSON, nullable=True)
+    documentation = Column(JSON, nullable=True)

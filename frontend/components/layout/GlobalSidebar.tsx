@@ -12,7 +12,8 @@ import {
   FileText, 
   BookOpen, 
   Settings, 
-  LogOut 
+  LogOut,
+  Library
 } from "lucide-react";
 
 export type NavItemData = {
@@ -203,6 +204,7 @@ export function GlobalSidebar({
         { id: 'projects', title: 'Projects', icon: FolderKanban },
         { id: 'ai-design', title: 'AI Design', icon: Sparkles },
         { id: 'schematic', title: 'Schematic', icon: Cpu },
+        { id: 'library', title: 'Component Library', icon: Library },
         { id: 'rtl', title: 'RTL', icon: Terminal },
         { id: 'simulation', title: 'Simulation', icon: Activity },
         { id: 'verification', title: 'Verification', icon: ShieldCheck },
