@@ -354,6 +354,10 @@ export default function Home() {
   const [searchPaletteQuery, setSearchPaletteQuery] = useState("");
   const [activeWorkspace, setActiveWorkspace] = useState("Acme Semiconductor");
 
+  // Topology registry state — loaded from backend on mount
+  const [availableTopologies, setAvailableTopologies] = useState<any[]>([]);
+  const [selectedTopologyCanonical, setSelectedTopologyCanonical] = useState<string>("6T SRAM");
+
   // Dynamic Library Manager states
   const [libComponents, setLibComponents] = useState<any[]>([]);
   const [pdkStatuses, setPdkStatuses] = useState<Record<string, boolean>>({});
@@ -374,6 +378,33 @@ export default function Home() {
         { name: "PMOS", pins: ["D", "G", "S", "B"], parameters: {W:0.54, L:0.15}, model: "sky130_fd_pr__pfet_01v8", category: "Basic Components", desc: "1.8V Standard PMOS" }
       ]);
       setPdkStatuses({ "SKY130": true, "TSMC65": true });
+    }
+  };
+
+  const loadTopologies = async () => {
+    try {
+      const data = await (api as any).listTopologies();
+      setAvailableTopologies(data);
+    } catch (err) {
+      console.error("Failed to load topology registry from backend", err);
+      setAvailableTopologies([
+        { canonical: "6T SRAM",              name: "6T SRAM Cell",          category: "Memory",  optimizations: ["Low Leakage","High Speed","Minimal Area","default"] },
+        { canonical: "8T SRAM",              name: "8T SRAM Sep. Read",     category: "Memory",  optimizations: ["Low Leakage","High Speed","default"] },
+        { canonical: "9T SRAM",              name: "9T SRAM + Sleep Tx",    category: "Memory",  optimizations: ["Low Leakage","Ultra Low Power","default"] },
+        { canonical: "10T SRAM",             name: "10T SRAM Sub-Vt",       category: "Memory",  optimizations: ["Ultra Low Power","Low Leakage","default"] },
+        { canonical: "Current Mirror",       name: "Basic Current Mirror",  category: "Analog",  optimizations: ["Low Leakage","High Precision","High Speed","default"] },
+        { canonical: "Cascode Current Mirror",name: "Cascode Mirror",       category: "Analog",  optimizations: ["High Precision","Low Voltage","default"] },
+        { canonical: "Differential Pair",    name: "Differential Pair",     category: "Analog",  optimizations: ["Low Leakage","High Speed","High Gain","default"] },
+        { canonical: "StrongARM Comparator", name: "StrongARM Comparator",  category: "Analog",  optimizations: ["High Speed","Low Power","default"] },
+        { canonical: "Bandgap Reference",    name: "Bandgap Reference",     category: "Analog",  optimizations: ["Low Power","High Precision","default"] },
+        { canonical: "Folded Cascode OTA",   name: "Folded Cascode OTA",    category: "Analog",  optimizations: ["High Gain","High Speed","default"] },
+        { canonical: "Ring Oscillator",      name: "Ring Oscillator",       category: "Digital", optimizations: ["Low Leakage","High Speed","Low Power","default"] },
+        { canonical: "Inverter",             name: "CMOS Inverter",         category: "Digital", optimizations: ["High Speed","Low Power","Minimal Area","default"] },
+        { canonical: "NAND Gate",            name: "CMOS 2-Input NAND",     category: "Digital", optimizations: ["High Speed","Low Power","default"] },
+        { canonical: "NOR Gate",             name: "CMOS 2-Input NOR",      category: "Digital", optimizations: ["High Speed","Low Power","default"] },
+        { canonical: "D Flip-Flop",          name: "D Flip-Flop",           category: "Digital", optimizations: ["High Speed","Low Power","default"] },
+        { canonical: "D Latch",              name: "D Latch",               category: "Digital", optimizations: ["High Speed","Low Power","default"] },
+      ]);
     }
   };
 
@@ -403,6 +434,7 @@ export default function Home() {
     setIsLoggedIn(true);
     loadProjects();
     loadLibraryData();
+    loadTopologies();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -2117,25 +2149,61 @@ export default function Home() {
           {/* Prompt input area */}
           <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-4">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block font-sans">Describe what you want (Engineering Sizing Specifications)</label>
+
+            {/* Topology selector — populated from registry */}
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Topology:</span>
+              <select
+                value={selectedTopologyCanonical}
+                onChange={(e) => {
+                  const canonical = e.target.value;
+                  setSelectedTopologyCanonical(canonical);
+                  setPrompt(`Design a ${canonical} using SKY130`);
+                  // Reset optimization to first available option for this topology
+                  const tpl = availableTopologies.find(t => t.canonical === canonical);
+                  const firstOpt = tpl?.optimizations?.find((o: string) => o !== "default") ?? "default";
+                  setOptimization(firstOpt);
+                }}
+                className="flex-1 bg-slate-50 border border-border rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-primary"
+              >
+                {["Memory", "Analog", "Digital"].map(cat => {
+                  const group = availableTopologies.filter(t => t.category === cat);
+                  if (!group.length) return null;
+                  return (
+                    <optgroup key={cat} label={cat}>
+                      {group.map((t: any) => (
+                        <option key={t.canonical} value={t.canonical}>
+                          {t.canonical} — {t.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
+              </select>
+            </div>
+
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe your target specs (e.g. Generate 6T SRAM optimized for leakage biased at 1.8V)..."
-              className="w-full bg-slate-50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-xl p-4 text-xs font-mono resize-none h-24 transition shadow-inner leading-relaxed text-slate-700"
+              placeholder="Describe your target specs (e.g. Design a 9T SRAM using SKY130 low leakage)..."
+              className="w-full bg-slate-50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-xl p-4 text-xs font-mono resize-none h-20 transition shadow-inner leading-relaxed text-slate-700"
             />
             
-            {/* Optimization Selector */}
+            {/* Optimization Selector — options driven by selected topology */}
             <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between pt-2">
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Optimization Priority:</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Optimization:</span>
                 <select
                   value={optimization}
                   onChange={(e) => setOptimization(e.target.value)}
-                  className="bg-slate-50 border border-border rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none"
+                  className="bg-slate-50 border border-border rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-primary"
                 >
-                  <option value="Low Leakage">Low Leakage</option>
-                  <option value="High Speed">High Speed</option>
-                  <option value="Min Area">Minimum Area</option>
+                  {(availableTopologies.find(t => t.canonical === selectedTopologyCanonical)?.optimizations ?? ["Low Leakage", "High Speed", "Low Power", "default"])
+                    .filter((o: string) => o !== "default")
+                    .map((opt: string) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))
+                  }
                 </select>
               </div>
 
@@ -2199,7 +2267,7 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-sans text-xs">
                 <div className="p-4 bg-slate-50 border border-border rounded-xl">
                   <span className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Architecture</span>
-                  <strong className="text-slate-800 text-sm">6T Cell Structure</strong>
+                  <strong className="text-slate-800 text-sm">{activeDesign?.requirements_json?.type ?? "Unknown Topology"}</strong>
                 </div>
                 <div className="p-4 bg-slate-50 border border-border rounded-xl">
                   <span className="text-[9px] uppercase font-bold text-slate-400 block mb-1">RTL Status</span>
@@ -2260,6 +2328,37 @@ export default function Home() {
                   Run Simulation
                 </button>
               </div>
+
+              {/* Design Version History */}
+              {designs.length > 1 && (
+                <div className="border-t border-slate-100 pt-4 space-y-2">
+                  <span className="text-[9px] uppercase font-bold text-slate-400 block">Version History</span>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {designs.map((d: any) => {
+                      const isActive = d.id === activeDesign?.id;
+                      return (
+                        <button
+                          key={d.id}
+                          onClick={() => { setActiveDesign(d); setConsoleLogs(d.logs_content || ""); }}
+                          className={`w-full text-left px-3 py-2 rounded-xl border transition flex items-center justify-between gap-2 ${
+                            isActive
+                              ? "bg-primary/10 border-primary/30 text-primary"
+                              : "bg-slate-50 border-slate-100 text-slate-600 hover:border-primary/30 hover:text-primary"
+                          }`}
+                        >
+                          <span className="font-mono text-[10px] font-bold">v{d.version}</span>
+                          <span className="text-[10px] font-sans truncate flex-1 text-center">
+                            {d.requirements_json?.type ?? "Design"}
+                          </span>
+                          <span className="text-[9px] text-slate-400 font-sans shrink-0">
+                            {d.requirements_json?.optimization ?? "default"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -2452,6 +2551,31 @@ endmodule
 
         {/* Oscilloscope Canvas */}
         <div className="flex-1 min-h-[350px]">
+          {/* Signal probe toggles — derived from actual waveform data */}
+          {activeDesign?.simulation_results_json?.waveforms && (
+            <div className="flex flex-wrap gap-2 px-2 pb-3">
+              <span className="text-[9px] font-bold text-slate-400 uppercase self-center">Probes:</span>
+              {Object.keys(activeDesign.simulation_results_json.waveforms)
+                .filter((k: string) => k !== "x")
+                .map((sig: string) => {
+                  const label = sig.replace(/^y_/, "");
+                  const active = probedSignals.includes(sig);
+                  return (
+                    <button
+                      key={sig}
+                      onClick={() => handleSignalProbeToggle(sig)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-mono border transition ${
+                        active
+                          ? "bg-primary text-white border-primary shadow-sm"
+                          : "bg-slate-100 text-slate-500 border-slate-200 hover:border-primary hover:text-primary"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+            </div>
+          )}
           <SimulationScope
             activeDesign={activeDesign}
             probedSignals={probedSignals}

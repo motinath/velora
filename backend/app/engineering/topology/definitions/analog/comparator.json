@@ -3,40 +3,17 @@
   "variant": "StrongARM",
   "canonical": "StrongARM Comparator",
   "name": "StrongARM Latch Comparator",
-  "description": "Dynamic regenerative comparator based on the StrongARM topology. During the reset phase (CLK=0) M_RST pulls output nodes to VDD. During the evaluation phase (CLK=1) M_CLK enables the tail current, the cross-coupled latch regenerates the input voltage difference to a full-swing digital output. Zero static power. Widely used in ADCs and clock-data recovery circuits.",
+  "description": "Dynamic regenerative comparator. Reset phase (CLK=0): M_RST pulls outputs to VDD. Evaluation phase (CLK=1): M_CLK enables tail current, the cross-coupled latch regenerates the input voltage difference to full-swing digital output. Zero static power.",
   "category": "Analog",
   "technology": ["SKY130"],
   "keywords": ["comparator", "strongarm", "strongarm latch", "dynamic comparator", "latch comparator", "adc comparator", "clocked comparator"],
   "dynamic": false,
   "dynamic_strategy": null,
-
   "optimizations": {
-    "High Speed": {
-      "w_in": 4.0,
-      "w_inv": 2.0,
-      "w_rst": 1.0,
-      "w_clk": 3.0,
-      "l_val": 0.15,
-      "reasoning": "Minimum length and wide input pair maximise regeneration speed; wider tail device reduces evaluation time."
-    },
-    "Low Power": {
-      "w_in": 2.0,
-      "w_inv": 1.0,
-      "w_rst": 0.5,
-      "w_clk": 1.5,
-      "l_val": 0.25,
-      "reasoning": "Smaller devices reduce dynamic power; clock frequency must compensate for longer evaluation time."
-    },
-    "default": {
-      "w_in": 3.0,
-      "w_inv": 1.5,
-      "w_rst": 0.72,
-      "w_clk": 2.0,
-      "l_val": 0.15,
-      "reasoning": "Standard trade-off: input offset < 5mV, evaluation time < 200ps at 1.8V."
-    }
+    "High Speed": {"w_in": 4.0, "w_inv": 2.0, "w_rst": 1.0, "w_clk": 3.0, "l_val": 0.15, "reasoning": "Minimum length and wide input pair maximise regeneration speed."},
+    "Low Power":  {"w_in": 2.0, "w_inv": 1.0, "w_rst": 0.5, "w_clk": 1.5, "l_val": 0.25, "reasoning": "Smaller devices reduce dynamic power."},
+    "default":    {"w_in": 3.0, "w_inv": 1.5, "w_rst": 0.72,"w_clk": 2.0, "l_val": 0.15, "reasoning": "Standard trade-off: input offset < 5mV, evaluation time < 200ps at 1.8V."}
   },
-
   "components": [
     {"id": "M_INP",   "type": "NMOS", "w_key": "w_in",  "l_key": "l_val"},
     {"id": "M_INM",   "type": "NMOS", "w_key": "w_in",  "l_key": "l_val"},
@@ -47,15 +24,13 @@
     {"id": "M_RST_P", "type": "PMOS", "w_key": "w_rst", "l_key": "l_val"},
     {"id": "M_RST_N", "type": "PMOS", "w_key": "w_rst", "l_key": "l_val"},
     {"id": "M_CLK",   "type": "NMOS", "w_key": "w_clk", "l_key": "l_val"},
-    {"id": "V_VDD",   "type": "VDD"},
-    {"id": "V_GND",   "type": "GND"},
+    {"id": "V_VDD",   "type": "VDD"}, {"id": "V_GND",  "type": "GND"},
     {"id": "P_INP",   "type": "PIN",  "label": "IN_P"},
     {"id": "P_INM",   "type": "PIN",  "label": "IN_M"},
     {"id": "P_CLK",   "type": "PIN",  "label": "CLK"},
     {"id": "P_OUTP",  "type": "PIN",  "label": "OUT_P"},
     {"id": "P_OUTM",  "type": "PIN",  "label": "OUT_M"}
   ],
-
   "connections": [
     {"comp": "V_VDD",    "pin": "VDD", "net": "VDD"},
     {"comp": "V_GND",    "pin": "GND", "net": "GND"},
@@ -101,18 +76,71 @@
     {"comp": "P_OUTP",   "pin": "IO",  "net": "out_p"},
     {"comp": "P_OUTM",   "pin": "IO",  "net": "out_m"}
   ],
-
+  "layout": {
+    "canvas": {"width": 820, "height": 520},
+    "component_positions": {
+      "M_CLK":    {"x": 400, "y": 430},
+      "M_INP":    {"x": 300, "y": 330}, "M_INM":    {"x": 500, "y": 330},
+      "M_INV_P":  {"x": 270, "y": 190}, "M_INV_N":  {"x": 270, "y": 290},
+      "M_INV_P2": {"x": 530, "y": 190}, "M_INV_N2": {"x": 530, "y": 290},
+      "M_RST_P":  {"x": 270, "y": 100}, "M_RST_N":  {"x": 530, "y": 100},
+      "V_VDD":    {"x": 400, "y": 50},  "V_GND":    {"x": 400, "y": 490},
+      "P_INP":    {"x": 180, "y": 330}, "P_INM":    {"x": 620, "y": 330},
+      "P_CLK":    {"x": 490, "y": 430}, "P_OUTP":   {"x": 160, "y": 100},
+      "P_OUTM":   {"x": 640, "y": 100}
+    },
+    "wires": [
+      {"x1": 270, "y1": 70,  "x2": 530, "y2": 70,  "net": "VDD"},
+      {"x1": 400, "y1": 50,  "x2": 400, "y2": 70,  "net": "VDD"},
+      {"x1": 270, "y1": 70,  "x2": 270, "y2": 80,  "net": "VDD"},
+      {"x1": 530, "y1": 70,  "x2": 530, "y2": 80,  "net": "VDD"},
+      {"x1": 400, "y1": 450, "x2": 400, "y2": 490, "net": "GND"},
+      {"x1": 300, "y1": 350, "x2": 300, "y2": 400, "net": "tail"},
+      {"x1": 500, "y1": 350, "x2": 500, "y2": 400, "net": "tail"},
+      {"x1": 300, "y1": 400, "x2": 500, "y2": 400, "net": "tail"},
+      {"x1": 400, "y1": 400, "x2": 400, "y2": 410, "net": "tail"},
+      {"x1": 180, "y1": 330, "x2": 280, "y2": 330, "net": "inp_net"},
+      {"x1": 620, "y1": 330, "x2": 520, "y2": 330, "net": "inm_net"},
+      {"x1": 270, "y1": 120, "x2": 160, "y2": 120, "net": "out_p"},
+      {"x1": 160, "y1": 100, "x2": 160, "y2": 120, "net": "out_p"},
+      {"x1": 530, "y1": 120, "x2": 640, "y2": 120, "net": "out_m"},
+      {"x1": 640, "y1": 100, "x2": 640, "y2": 120, "net": "out_m"}
+    ]
+  },
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.05,
+    "x_points": 100,
+    "signals": ["CLK", "IN_P", "IN_M", "OUT_P", "OUT_M"],
+    "physics": {
+      "evaluation_time_ps": 200.0,
+      "power_per_cycle_fw": 50.0,
+      "optimization_overrides": {
+        "High Speed": {"evaluation_time_ps": 80.0,  "power_per_cycle_fw": 120.0},
+        "Low Power":  {"evaluation_time_ps": 400.0, "power_per_cycle_fw": 20.0}
+      }
+    }
+  },
+  "design_intents": [
+    {
+      "decision_template": "StrongARM dynamic latch with reset PMOS (W_RST={w_rst}um)",
+      "reason": "Dynamic latch comparator achieves zero static power — the only power consumed is dynamic switching energy per comparison cycle. The regenerative cross-coupled latch amplifies the input voltage difference exponentially, giving sub-ns evaluation times.",
+      "tradeoffs": "Input offset is set by M_INP/M_INM mismatch and is random. No static correction. CLK frequency directly trades off against power.",
+      "alternatives": ["Pre-amplifier + regenerative latch (lower offset)", "Static differential comparator (higher power)"],
+      "references": ["Razavi StrongARM Latch Analysis CICC 2015", "Figueiredo Comparator Survey TCAS-II 2006"],
+      "affected_blocks": ["M_RST_P", "M_RST_N", "M_INV_P", "M_INV_P2"]
+    }
+  ],
   "sizing_notes": {
     "M_INP":  "Input NMOS — differential current imbalance starts regeneration; wider = less input offset.",
     "M_INM":  "Input NMOS — must match M_INP; mismatch is the primary source of random offset.",
-    "M_CLK":  "Tail NMOS — enables evaluation on rising CLK; size for sufficient tail current.",
-    "M_RST_P":"Reset PMOS — resets out_p to VDD on CLK=0; must be weak enough not to fight regeneration.",
-    "M_RST_N":"Reset PMOS — resets out_m to VDD on CLK=0."
+    "M_CLK":  "Tail NMOS — enables evaluation on rising CLK.",
+    "M_RST_P":"Reset PMOS — resets out_p to VDD on CLK=0."
   },
-
   "kg_nodes": [
-    {"id": "StrongARM Comparator","type": "Circuit Block",     "description": "Dynamic regenerative latch comparator with zero static power."},
-    {"id": "Regeneration",        "type": "Mechanism",         "description": "Positive feedback amplification that resolves a small differential to full swing."},
+    {"id": "StrongARM Comparator","type": "Circuit Block",      "description": "Dynamic regenerative latch comparator with zero static power."},
+    {"id": "Regeneration",        "type": "Mechanism",          "description": "Positive feedback amplification that resolves a small differential to full swing."},
     {"id": "Input Offset",        "type": "Metric / Constraint","description": "Systematic or random voltage offset at which the comparator switches."}
   ],
   "kg_edges": [

@@ -3,77 +3,88 @@
   "variant": "Inverter",
   "canonical": "Inverter",
   "name": "CMOS Inverter",
-  "description": "Fundamental single-stage CMOS logic gate. PMOS (M_P) pulls output to VDD when input is LOW; NMOS (M_N) pulls output to GND when input is HIGH. Zero static power. The building block of all CMOS digital logic.",
+  "description": "Fundamental single-stage CMOS logic gate. PMOS pulls output to VDD when input LOW; NMOS pulls output to GND when input HIGH. Zero static power.",
   "category": "Digital",
   "technology": ["SKY130"],
   "keywords": ["inverter", "not gate", "cmos inverter", "buffer", "inv", "logic not"],
   "dynamic": false,
   "dynamic_strategy": null,
-
   "optimizations": {
-    "High Speed": {
-      "w_p": 1.08,
-      "w_n": 0.54,
-      "l_val": 0.15,
-      "reasoning": "Wide PMOS (2x NMOS) at minimum length; symmetric drive strength maximises switching speed."
-    },
-    "Low Power": {
-      "w_p": 0.54,
-      "w_n": 0.36,
-      "l_val": 0.35,
-      "reasoning": "Longer channels reduce leakage at idle; acceptable for low-frequency control logic."
-    },
-    "Minimal Area": {
-      "w_p": 0.42,
-      "w_n": 0.28,
-      "l_val": 0.15,
-      "reasoning": "Minimum-width transistors for highest density standard cell."
-    },
-    "default": {
-      "w_p": 0.72,
-      "w_n": 0.36,
-      "l_val": 0.15,
-      "reasoning": "2:1 PMOS:NMOS ratio compensates for lower hole mobility; balanced rise/fall times."
-    }
+    "High Speed":  {"w_p": 1.08, "w_n": 0.54, "l_val": 0.15, "reasoning": "Wide PMOS (2x NMOS) at minimum length maximises switching speed."},
+    "Low Power":   {"w_p": 0.54, "w_n": 0.36, "l_val": 0.35, "reasoning": "Longer channels reduce leakage."},
+    "Minimal Area":{"w_p": 0.42, "w_n": 0.28, "l_val": 0.15, "reasoning": "Minimum-width transistors for highest density."},
+    "default":     {"w_p": 0.72, "w_n": 0.36, "l_val": 0.15, "reasoning": "2:1 PMOS:NMOS ratio; balanced rise/fall times."}
   },
-
   "components": [
-    {"id": "M_P",   "type": "PMOS", "w_key": "w_p",   "l_key": "l_val"},
-    {"id": "M_N",   "type": "NMOS", "w_key": "w_n",   "l_key": "l_val"},
-    {"id": "V_VDD", "type": "VDD"},
-    {"id": "V_GND", "type": "GND"},
+    {"id": "M_P",   "type": "PMOS", "w_key": "w_p",  "l_key": "l_val"},
+    {"id": "M_N",   "type": "NMOS", "w_key": "w_n",  "l_key": "l_val"},
+    {"id": "V_VDD", "type": "VDD"}, {"id": "V_GND", "type": "GND"},
     {"id": "P_IN",  "type": "PIN",  "label": "IN"},
     {"id": "P_OUT", "type": "PIN",  "label": "OUT"}
   ],
-
   "connections": [
-    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
-    {"comp": "V_GND", "pin": "GND", "net": "GND"},
-    {"comp": "M_P",   "pin": "S",   "net": "VDD"},
-    {"comp": "M_P",   "pin": "B",   "net": "VDD"},
-    {"comp": "M_P",   "pin": "G",   "net": "in_net"},
-    {"comp": "M_P",   "pin": "D",   "net": "out_net"},
-    {"comp": "M_N",   "pin": "S",   "net": "GND"},
-    {"comp": "M_N",   "pin": "B",   "net": "GND"},
-    {"comp": "M_N",   "pin": "G",   "net": "in_net"},
-    {"comp": "M_N",   "pin": "D",   "net": "out_net"},
-    {"comp": "P_IN",  "pin": "IO",  "net": "in_net"},
-    {"comp": "P_OUT", "pin": "IO",  "net": "out_net"}
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"}, {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_P",   "pin": "S",   "net": "VDD"}, {"comp": "M_P",   "pin": "B",   "net": "VDD"},
+    {"comp": "M_P",   "pin": "G",   "net": "in_net"}, {"comp": "M_P",   "pin": "D",   "net": "out_net"},
+    {"comp": "M_N",   "pin": "S",   "net": "GND"}, {"comp": "M_N",   "pin": "B",   "net": "GND"},
+    {"comp": "M_N",   "pin": "G",   "net": "in_net"}, {"comp": "M_N",   "pin": "D",   "net": "out_net"},
+    {"comp": "P_IN",  "pin": "IO",  "net": "in_net"}, {"comp": "P_OUT", "pin": "IO",  "net": "out_net"}
   ],
-
-  "sizing_notes": {
-    "M_P": "PMOS pull-up — sized ~2x NMOS width to equalise electron/hole mobility difference for matched t_pHL / t_pLH.",
-    "M_N": "NMOS pull-down — reference width; mobility advantage means it's sized smaller than PMOS."
+  "layout": {
+    "canvas": {"width": 480, "height": 380},
+    "component_positions": {
+      "M_P":   {"x": 240, "y": 150}, "M_N":   {"x": 240, "y": 250},
+      "V_VDD": {"x": 240, "y": 60},  "V_GND": {"x": 240, "y": 340},
+      "P_IN":  {"x": 100, "y": 200}, "P_OUT": {"x": 380, "y": 200}
+    },
+    "wires": [
+      {"x1": 240, "y1": 60,  "x2": 240, "y2": 130, "net": "VDD"},
+      {"x1": 240, "y1": 270, "x2": 240, "y2": 340, "net": "GND"},
+      {"x1": 100, "y1": 200, "x2": 220, "y2": 200, "net": "in_net"},
+      {"x1": 220, "y1": 150, "x2": 220, "y2": 250, "net": "in_net"},
+      {"x1": 260, "y1": 170, "x2": 340, "y2": 170, "net": "out_net"},
+      {"x1": 260, "y1": 230, "x2": 340, "y2": 230, "net": "out_net"},
+      {"x1": 340, "y1": 170, "x2": 340, "y2": 230, "net": "out_net"},
+      {"x1": 340, "y1": 200, "x2": 380, "y2": 200, "net": "out_net"}
+    ]
   },
-
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.05,
+    "x_points": 100,
+    "signals": ["IN", "OUT"],
+    "physics": {
+      "base_td_ps": 20.0,
+      "optimization_overrides": {
+        "High Speed":   {"base_td_ps": 10.0},
+        "Low Power":    {"base_td_ps": 50.0},
+        "Minimal Area": {"base_td_ps": 28.0}
+      }
+    }
+  },
+  "design_intents": [
+    {
+      "decision_template": "PMOS:NMOS width ratio 2:1 (W_P={w_p}um, W_N={w_n}um, L={l_val}um)",
+      "reason": "Hole mobility in SKY130 is approximately half electron mobility. Sizing W_P ≈ 2×W_N equalises the pull-up and pull-down drive currents, giving symmetric rise and fall times and a logic threshold near VDD/2.",
+      "tradeoffs": "Symmetric sizing maximises noise margins but consumes ~3x the area of a minimum-width inverter.",
+      "alternatives": ["Skewed inverter (faster fall, slower rise) for driving NAND inputs", "Minimum-width inverter for area-critical paths"],
+      "references": ["CMOS VLSI Design - Weste & Harris Ch.5", "SKY130 Standard Cell Library Documentation"],
+      "affected_blocks": ["M_P", "M_N"]
+    }
+  ],
+  "sizing_notes": {
+    "M_P": "PMOS pull-up — sized ~2x NMOS width to equalise electron/hole mobility for matched t_pHL / t_pLH.",
+    "M_N": "NMOS pull-down — reference width; mobility advantage means it is sized smaller than PMOS."
+  },
   "kg_nodes": [
-    {"id": "Inverter",          "type": "Logic Gate",        "description": "Standard CMOS inversion driver cell."},
-    {"id": "Logic Threshold",   "type": "Metric / Constraint","description": "Input voltage at which output switches; ideally VDD/2 for symmetric noise margins."},
-    {"id": "Noise Margin",      "type": "Metric / Constraint","description": "Allowable input voltage deviation before output logic level becomes ambiguous."}
+    {"id": "Inverter",        "type": "Logic Gate",         "description": "Standard CMOS inversion driver cell."},
+    {"id": "Logic Threshold", "type": "Metric / Constraint","description": "Input voltage at which output switches; ideally VDD/2 for symmetric noise margins."},
+    {"id": "Noise Margin",    "type": "Metric / Constraint","description": "Allowable input voltage deviation before output logic level becomes ambiguous."}
   ],
   "kg_edges": [
-    {"source": "Inverter",      "relation": "verified by",  "target": "Logic Threshold"},
-    {"source": "Inverter",      "relation": "verified by",  "target": "Noise Margin"},
-    {"source": "Inverter",      "relation": "depends on",   "target": "Propagation Delay"}
+    {"source": "Inverter", "relation": "verified by", "target": "Logic Threshold"},
+    {"source": "Inverter", "relation": "verified by", "target": "Noise Margin"},
+    {"source": "Inverter", "relation": "depends on",  "target": "Propagation Delay"}
   ]
 }

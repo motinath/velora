@@ -11,26 +11,10 @@
   "dynamic_strategy": null,
 
   "optimizations": {
-    "Low Leakage": {
-      "w_val": 2.0,
-      "l_val": 1.0,
-      "reasoning": "Increased channel dimensions minimise drain-source subthreshold leakage and reduce channel-length modulation."
-    },
-    "High Precision": {
-      "w_val": 4.0,
-      "l_val": 2.0,
-      "reasoning": "Long channel suppresses channel-length modulation (λ) mismatch; wider channels improve matching."
-    },
-    "High Speed": {
-      "w_val": 2.0,
-      "l_val": 0.15,
-      "reasoning": "Minimum length for fastest settling; precision reduced but bandwidth maximised."
-    },
-    "default": {
-      "w_val": 1.0,
-      "l_val": 0.5,
-      "reasoning": "Balanced sizing: adequate precision with reasonable area."
-    }
+    "Low Leakage":    {"w_val": 2.0, "l_val": 1.0, "reasoning": "Increased channel dimensions minimise drain-source subthreshold leakage and reduce channel-length modulation."},
+    "High Precision": {"w_val": 4.0, "l_val": 2.0, "reasoning": "Long channel suppresses channel-length modulation; wider channels improve matching."},
+    "High Speed":     {"w_val": 2.0, "l_val": 0.15,"reasoning": "Minimum length for fastest settling; precision reduced but bandwidth maximised."},
+    "default":        {"w_val": 1.0, "l_val": 0.5, "reasoning": "Balanced sizing: adequate precision with reasonable area."}
   },
 
   "components": [
@@ -57,15 +41,76 @@
     {"comp": "P_IOUT", "pin": "IO",  "net": "out_net"}
   ],
 
+  "layout": {
+    "canvas": {"width": 700, "height": 420},
+    "component_positions": {
+      "M_REF":  {"x": 250, "y": 230},
+      "M_MIR":  {"x": 450, "y": 230},
+      "V_VDD":  {"x": 350, "y": 50},
+      "V_GND":  {"x": 350, "y": 390},
+      "P_IREF": {"x": 250, "y": 110},
+      "P_IOUT": {"x": 450, "y": 110}
+    },
+    "wires": [
+      {"x1": 250, "y1": 110, "x2": 250, "y2": 210, "net": "gate_net"},
+      {"x1": 450, "y1": 110, "x2": 450, "y2": 210, "net": "out_net"},
+      {"x1": 250, "y1": 160, "x2": 450, "y2": 160, "net": "gate_net"},
+      {"x1": 250, "y1": 160, "x2": 250, "y2": 230, "net": "gate_net"},
+      {"x1": 450, "y1": 160, "x2": 450, "y2": 230, "net": "gate_net"},
+      {"x1": 250, "y1": 250, "x2": 250, "y2": 360, "net": "GND"},
+      {"x1": 450, "y1": 250, "x2": 450, "y2": 360, "net": "GND"},
+      {"x1": 250, "y1": 360, "x2": 450, "y2": 360, "net": "GND"},
+      {"x1": 350, "y1": 360, "x2": 350, "y2": 390, "net": "GND"}
+    ]
+  },
+
+  "simulation": {
+    "analysis_type": "dc_sweep",
+    "x_label": "V_DS (V)",
+    "x_step": 0.02,
+    "x_points": 100,
+    "signals": ["I_REF", "I_OUT"],
+    "physics": {
+      "iref_target_ua": 10.0,
+      "lambda_default": 0.22,
+      "rout_default_kohm": 450.0,
+      "vsat_v": 0.15,
+      "optimization_overrides": {
+        "Low Leakage":    {"lambda_default": 0.04, "rout_default_kohm": 2500.0},
+        "High Precision": {"lambda_default": 0.02, "rout_default_kohm": 5000.0},
+        "High Speed":     {"lambda_default": 0.30, "rout_default_kohm": 200.0}
+      }
+    }
+  },
+
+  "design_intents": [
+    {
+      "decision_template": "Diode-connected reference NMOS M_REF (W={w_val}um, L={l_val}um)",
+      "reason": "Gate tied to drain forces M_REF to operate at the intersection of its I-V curve, converting the reference current IREF into a stable gate-source voltage that is mirrored to M_MIR.",
+      "tradeoffs": "Simple 1:1 topology but output resistance is limited by channel-length modulation. High λ means IOUT varies with VOUT.",
+      "alternatives": ["Cascode Current Mirror (higher Rout)", "Wilson Current Mirror"],
+      "references": ["Razavi - Design of Analog CMOS Integrated Circuits Ch.3", "Gray & Meyer - Analysis and Design of Analog ICs"],
+      "affected_blocks": ["M_REF"]
+    },
+    {
+      "decision_template": "Mirror transistor M_MIR matched to M_REF (W={w_val}um, L={l_val}um)",
+      "reason": "Identical W and L ensures the transconductance parameter ratio M_MIR/M_REF = 1.0, giving a 1:1 current copy. Any mismatch in W or L directly appears as a DC current error.",
+      "tradeoffs": "Layout must use common-centroid placement to minimise local threshold voltage gradient mismatch.",
+      "alternatives": ["Ratioed W/L for scaled mirror output (N:1 mirror)"],
+      "references": ["PDK Device Matching Rules", "Pelgrom Mismatch Model"],
+      "affected_blocks": ["M_MIR"]
+    }
+  ],
+
   "sizing_notes": {
     "M_REF": "Diode-connected reference. Increasing L improves output resistance and matching.",
     "M_MIR": "Mirror transistor. Must be matched to M_REF for 1:1 accuracy. Use same L and W."
   },
 
   "kg_nodes": [
-    {"id": "Current Mirror",         "type": "Circuit Block",    "description": "Matched transistor paths replicating bias current values."},
-    {"id": "Diode Configuration",    "type": "Topology",         "description": "Transistor gate tied to its drain node to create a bias reference."},
-    {"id": "Channel Length Modulation","type": "Physical Effect","description": "Effective channel length variation under VDS fluctuation causing output current error."}
+    {"id": "Current Mirror",            "type": "Circuit Block", "description": "Matched transistor paths replicating bias current values."},
+    {"id": "Diode Configuration",       "type": "Topology",      "description": "Transistor gate tied to its drain node to create a bias reference."},
+    {"id": "Channel Length Modulation", "type": "Physical Effect","description": "Effective channel length variation under VDS fluctuation causing output current error."}
   ],
   "kg_edges": [
     {"source": "Current Mirror",  "relation": "uses",          "target": "Diode Configuration"},

@@ -3,111 +3,120 @@
   "variant": "Latch",
   "canonical": "D Latch",
   "name": "D Latch — Level-Sensitive CMOS Latch",
-  "description": "Level-sensitive D latch built with a transmission gate and cross-coupled inverter feedback. When EN=1, the latch is transparent: Q follows D. When EN=0, the cross-coupled inverters (M_FB_P, M_FB_N) hold the last sampled value. Half the area of a DFF; used in time-borrowing pipelines and scan chains.",
+  "description": "Level-sensitive D latch. When EN=1, Q follows D (transparent). When EN=0, cross-coupled inverters hold the last sampled value.",
   "category": "Digital",
   "technology": ["SKY130"],
   "keywords": ["latch", "d latch", "level sensitive", "transparent latch", "level triggered", "data latch"],
   "dynamic": false,
   "dynamic_strategy": null,
-
   "optimizations": {
-    "High Speed": {
-      "w_tg":  0.72,
-      "w_inv": 0.54,
-      "w_fb":  0.36,
-      "l_val": 0.15,
-      "reasoning": "Wide transmission gate for fast pass; feedback inverters weaker so input can override them on setup."
+    "High Speed": {"w_tg": 0.72, "w_inv": 0.54, "w_fb": 0.36, "l_val": 0.15, "reasoning": "Wide TG for fast pass; weak feedback so input can override on setup."},
+    "Low Power":  {"w_tg": 0.36, "w_inv": 0.28, "w_fb": 0.18, "l_val": 0.25, "reasoning": "Minimum-width devices for lowest dynamic power."},
+    "default":    {"w_tg": 0.54, "w_inv": 0.36, "w_fb": 0.24, "l_val": 0.15, "reasoning": "Feedback inverters ~2/3 of main inverter to avoid hold-time issues."}
+  },
+  "components": [
+    {"id": "M_TG_P",  "type": "PMOS", "w_key": "w_tg",  "l_key": "l_val"},
+    {"id": "M_TG_N",  "type": "NMOS", "w_key": "w_tg",  "l_key": "l_val"},
+    {"id": "M_INV_P", "type": "PMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "M_INV_N", "type": "NMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "M_FB_P",  "type": "PMOS", "w_key": "w_fb",  "l_key": "l_val"},
+    {"id": "M_FB_N",  "type": "NMOS", "w_key": "w_fb",  "l_key": "l_val"},
+    {"id": "M_EN_P",  "type": "PMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "M_EN_N",  "type": "NMOS", "w_key": "w_inv", "l_key": "l_val"},
+    {"id": "V_VDD",   "type": "VDD"}, {"id": "V_GND",   "type": "GND"},
+    {"id": "P_D",     "type": "PIN",  "label": "D"},
+    {"id": "P_EN",    "type": "PIN",  "label": "EN"},
+    {"id": "P_Q",     "type": "PIN",  "label": "Q"},
+    {"id": "P_QN",    "type": "PIN",  "label": "QN"}
+  ],
+  "connections": [
+    {"comp": "V_VDD",   "pin": "VDD", "net": "VDD"},   {"comp": "V_GND",   "pin": "GND", "net": "GND"},
+    {"comp": "M_EN_P",  "pin": "S",   "net": "VDD"},   {"comp": "M_EN_P",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_EN_P",  "pin": "G",   "net": "EN"},    {"comp": "M_EN_P",  "pin": "D",   "net": "EN_N"},
+    {"comp": "M_EN_N",  "pin": "S",   "net": "GND"},   {"comp": "M_EN_N",  "pin": "B",   "net": "GND"},
+    {"comp": "M_EN_N",  "pin": "G",   "net": "EN"},    {"comp": "M_EN_N",  "pin": "D",   "net": "EN_N"},
+    {"comp": "M_TG_P",  "pin": "S",   "net": "d_net"}, {"comp": "M_TG_P",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_TG_P",  "pin": "G",   "net": "EN_N"},  {"comp": "M_TG_P",  "pin": "D",   "net": "latch_in"},
+    {"comp": "M_TG_N",  "pin": "S",   "net": "d_net"}, {"comp": "M_TG_N",  "pin": "B",   "net": "GND"},
+    {"comp": "M_TG_N",  "pin": "G",   "net": "EN"},    {"comp": "M_TG_N",  "pin": "D",   "net": "latch_in"},
+    {"comp": "M_INV_P", "pin": "S",   "net": "VDD"},   {"comp": "M_INV_P", "pin": "B",   "net": "VDD"},
+    {"comp": "M_INV_P", "pin": "G",   "net": "latch_in"}, {"comp": "M_INV_P", "pin": "D",   "net": "qn_net"},
+    {"comp": "M_INV_N", "pin": "S",   "net": "GND"},   {"comp": "M_INV_N", "pin": "B",   "net": "GND"},
+    {"comp": "M_INV_N", "pin": "G",   "net": "latch_in"}, {"comp": "M_INV_N", "pin": "D",   "net": "qn_net"},
+    {"comp": "M_FB_P",  "pin": "S",   "net": "VDD"},   {"comp": "M_FB_P",  "pin": "B",   "net": "VDD"},
+    {"comp": "M_FB_P",  "pin": "G",   "net": "qn_net"},{"comp": "M_FB_P",  "pin": "D",   "net": "q_net"},
+    {"comp": "M_FB_N",  "pin": "S",   "net": "GND"},   {"comp": "M_FB_N",  "pin": "B",   "net": "GND"},
+    {"comp": "M_FB_N",  "pin": "G",   "net": "qn_net"},{"comp": "M_FB_N",  "pin": "D",   "net": "q_net"},
+    {"comp": "P_D",     "pin": "IO",  "net": "d_net"}, {"comp": "P_EN",    "pin": "IO",  "net": "EN"},
+    {"comp": "P_Q",     "pin": "IO",  "net": "q_net"}, {"comp": "P_QN",    "pin": "IO",  "net": "qn_net"}
+  ],
+  "layout": {
+    "canvas": {"width": 720, "height": 420},
+    "component_positions": {
+      "M_EN_P":  {"x": 130, "y": 150}, "M_EN_N":  {"x": 130, "y": 250},
+      "M_TG_P":  {"x": 280, "y": 160}, "M_TG_N":  {"x": 280, "y": 240},
+      "M_INV_P": {"x": 430, "y": 150}, "M_INV_N": {"x": 430, "y": 250},
+      "M_FB_P":  {"x": 580, "y": 150}, "M_FB_N":  {"x": 580, "y": 250},
+      "V_VDD":   {"x": 360, "y": 50},  "V_GND":   {"x": 360, "y": 390},
+      "P_D":     {"x": 60,  "y": 200}, "P_EN":    {"x": 60,  "y": 330},
+      "P_Q":     {"x": 660, "y": 200}, "P_QN":    {"x": 660, "y": 260}
     },
-    "Low Power": {
-      "w_tg":  0.36,
-      "w_inv": 0.28,
-      "w_fb":  0.18,
-      "l_val": 0.25,
-      "reasoning": "Minimum-width devices for lowest dynamic power."
-    },
-    "default": {
-      "w_tg":  0.54,
-      "w_inv": 0.36,
-      "w_fb":  0.24,
-      "l_val": 0.15,
-      "reasoning": "Standard sizing: feedback inverters sized ~2/3 of main inverter to avoid hold-time issues."
+    "wires": [
+      {"x1": 360, "y1": 50,  "x2": 360, "y2": 80,  "net": "VDD"},
+      {"x1": 80,  "y1": 80,  "x2": 640, "y2": 80,  "net": "VDD"},
+      {"x1": 360, "y1": 360, "x2": 360, "y2": 390, "net": "GND"},
+      {"x1": 80,  "y1": 360, "x2": 640, "y2": 360, "net": "GND"},
+      {"x1": 60,  "y1": 200, "x2": 200, "y2": 200, "net": "d_net"},
+      {"x1": 60,  "y1": 330, "x2": 130, "y2": 330, "net": "EN"},
+      {"x1": 130, "y1": 200, "x2": 130, "y2": 280, "net": "EN_N"},
+      {"x1": 200, "y1": 200, "x2": 400, "y2": 200, "net": "latch_in"},
+      {"x1": 450, "y1": 200, "x2": 550, "y2": 200, "net": "qn_net"},
+      {"x1": 600, "y1": 200, "x2": 640, "y2": 200, "net": "q_net"},
+      {"x1": 640, "y1": 200, "x2": 660, "y2": 200, "net": "q_net"},
+      {"x1": 600, "y1": 260, "x2": 660, "y2": 260, "net": "qn_net"}
+    ]
+  },
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.1,
+    "x_points": 100,
+    "signals": ["EN", "D", "Q", "QN"],
+    "physics": {
+      "setup_time_ps": 30.0,
+      "hold_time_ps": 10.0,
+      "d_to_q_ps": 55.0,
+      "optimization_overrides": {
+        "High Speed": {"setup_time_ps": 12.0, "d_to_q_ps": 22.0},
+        "Low Power":  {"setup_time_ps": 55.0, "d_to_q_ps": 95.0}
+      }
     }
   },
-
-  "components": [
-    {"id": "M_TG_P",   "type": "PMOS", "w_key": "w_tg",  "l_key": "l_val"},
-    {"id": "M_TG_N",   "type": "NMOS", "w_key": "w_tg",  "l_key": "l_val"},
-    {"id": "M_INV_P",  "type": "PMOS", "w_key": "w_inv", "l_key": "l_val"},
-    {"id": "M_INV_N",  "type": "NMOS", "w_key": "w_inv", "l_key": "l_val"},
-    {"id": "M_FB_P",   "type": "PMOS", "w_key": "w_fb",  "l_key": "l_val"},
-    {"id": "M_FB_N",   "type": "NMOS", "w_key": "w_fb",  "l_key": "l_val"},
-    {"id": "M_EN_P",   "type": "PMOS", "w_key": "w_inv", "l_key": "l_val"},
-    {"id": "M_EN_N",   "type": "NMOS", "w_key": "w_inv", "l_key": "l_val"},
-    {"id": "V_VDD",    "type": "VDD"},
-    {"id": "V_GND",    "type": "GND"},
-    {"id": "P_D",      "type": "PIN",  "label": "D"},
-    {"id": "P_EN",     "type": "PIN",  "label": "EN"},
-    {"id": "P_Q",      "type": "PIN",  "label": "Q"},
-    {"id": "P_QN",     "type": "PIN",  "label": "QN"}
+  "design_intents": [
+    {
+      "decision_template": "Feedback inverter weaker than main inverter (W_FB={w_fb}um vs W_INV={w_inv}um)",
+      "reason": "The feedback inverter (M_FB_P/N) must be weaker than the transmission gate drive strength so that new data can successfully overwrite the held state during the transparency window. If feedback is stronger than the input, the latch becomes a storage cell that cannot be written.",
+      "tradeoffs": "Weaker feedback reduces hold stability. W_FB ≈ 0.67×W_INV is the standard trade-off for reliable setup-hold timing.",
+      "alternatives": ["SR latch (two cross-coupled NOR/NAND)", "Sense-amplifier latch for ADC use"],
+      "references": ["SKY130 Latch Timing Analysis", "Static Timing Analysis for Nanometer Designs - Jayaram Bhasker"],
+      "affected_blocks": ["M_FB_P", "M_FB_N", "M_TG_P", "M_TG_N"]
+    }
   ],
-
-  "connections": [
-    {"comp": "V_VDD",   "pin": "VDD", "net": "VDD"},
-    {"comp": "V_GND",   "pin": "GND", "net": "GND"},
-    {"comp": "M_EN_P",  "pin": "S",   "net": "VDD"},
-    {"comp": "M_EN_P",  "pin": "B",   "net": "VDD"},
-    {"comp": "M_EN_P",  "pin": "G",   "net": "EN"},
-    {"comp": "M_EN_P",  "pin": "D",   "net": "EN_N"},
-    {"comp": "M_EN_N",  "pin": "S",   "net": "GND"},
-    {"comp": "M_EN_N",  "pin": "B",   "net": "GND"},
-    {"comp": "M_EN_N",  "pin": "G",   "net": "EN"},
-    {"comp": "M_EN_N",  "pin": "D",   "net": "EN_N"},
-    {"comp": "M_TG_P",  "pin": "S",   "net": "d_net"},
-    {"comp": "M_TG_P",  "pin": "B",   "net": "VDD"},
-    {"comp": "M_TG_P",  "pin": "G",   "net": "EN_N"},
-    {"comp": "M_TG_P",  "pin": "D",   "net": "latch_in"},
-    {"comp": "M_TG_N",  "pin": "S",   "net": "d_net"},
-    {"comp": "M_TG_N",  "pin": "B",   "net": "GND"},
-    {"comp": "M_TG_N",  "pin": "G",   "net": "EN"},
-    {"comp": "M_TG_N",  "pin": "D",   "net": "latch_in"},
-    {"comp": "M_INV_P", "pin": "S",   "net": "VDD"},
-    {"comp": "M_INV_P", "pin": "B",   "net": "VDD"},
-    {"comp": "M_INV_P", "pin": "G",   "net": "latch_in"},
-    {"comp": "M_INV_P", "pin": "D",   "net": "qn_net"},
-    {"comp": "M_INV_N", "pin": "S",   "net": "GND"},
-    {"comp": "M_INV_N", "pin": "B",   "net": "GND"},
-    {"comp": "M_INV_N", "pin": "G",   "net": "latch_in"},
-    {"comp": "M_INV_N", "pin": "D",   "net": "qn_net"},
-    {"comp": "M_FB_P",  "pin": "S",   "net": "VDD"},
-    {"comp": "M_FB_P",  "pin": "B",   "net": "VDD"},
-    {"comp": "M_FB_P",  "pin": "G",   "net": "qn_net"},
-    {"comp": "M_FB_P",  "pin": "D",   "net": "q_net"},
-    {"comp": "M_FB_N",  "pin": "S",   "net": "GND"},
-    {"comp": "M_FB_N",  "pin": "B",   "net": "GND"},
-    {"comp": "M_FB_N",  "pin": "G",   "net": "qn_net"},
-    {"comp": "M_FB_N",  "pin": "D",   "net": "q_net"},
-    {"comp": "P_D",     "pin": "IO",  "net": "d_net"},
-    {"comp": "P_EN",    "pin": "IO",  "net": "EN"},
-    {"comp": "P_Q",     "pin": "IO",  "net": "q_net"},
-    {"comp": "P_QN",    "pin": "IO",  "net": "qn_net"}
-  ],
-
   "sizing_notes": {
-    "M_TG_P":  "Transmission gate PMOS — main data pass device; sized for adequate drive strength.",
+    "M_TG_P":  "Transmission gate PMOS — main data pass device.",
     "M_TG_N":  "Transmission gate NMOS — complements PMOS to pass full-swing signal.",
     "M_INV_P": "Main inverter PMOS — produces QN from latch input.",
-    "M_FB_P":  "Feedback inverter PMOS — regenerates Q from QN; must be weaker than TG to allow data capture."
+    "M_FB_P":  "Feedback inverter PMOS — must be weaker than TG to allow data capture."
   },
-
   "kg_nodes": [
-    {"id": "D Latch",           "type": "Circuit Block",    "description": "Level-sensitive transparent latch; Q follows D when EN is asserted."},
-    {"id": "Transparency Window","type": "Timing Concept",  "description": "Period when EN=1 and the latch passes data; must satisfy setup/hold margins."}
+    {"id": "D Latch",            "type": "Circuit Block", "description": "Level-sensitive transparent latch; Q follows D when EN is asserted."},
+    {"id": "Transparency Window","type": "Timing Concept","description": "Period when EN=1 and the latch passes data."}
   ],
   "kg_edges": [
-    {"source": "D Latch",   "relation": "composed of",  "target": "Transmission Gate"},
-    {"source": "D Latch",   "relation": "composed of",  "target": "Inverter"},
+    {"source": "D Latch",    "relation": "composed of", "target": "Transmission Gate"},
+    {"source": "D Latch",    "relation": "composed of", "target": "Inverter"},
     {"source": "D Flip-Flop","relation": "composed of", "target": "D Latch"},
-    {"source": "D Latch",   "relation": "verified by",  "target": "Setup Time"},
-    {"source": "D Latch",   "relation": "verified by",  "target": "Hold Time"}
+    {"source": "D Latch",    "relation": "verified by", "target": "Setup Time"},
+    {"source": "D Latch",    "relation": "verified by", "target": "Hold Time"}
   ]
 }

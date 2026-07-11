@@ -12,32 +12,20 @@
 
   "optimizations": {
     "Low Leakage": {
-      "l_val": 0.25,
-      "w_pd": 0.60,
-      "w_pu": 0.40,
-      "w_pg": 0.45,
-      "reasoning": "Increased channel length L=0.25um reduces subthreshold leakage in standby. Slightly wider pull-down maintains read stability at the cost of increased area."
+      "l_val": 0.25, "w_pd": 0.60, "w_pu": 0.40, "w_pg": 0.45,
+      "reasoning": "Increased channel length L=0.25um reduces subthreshold leakage in standby."
     },
     "High Speed": {
-      "l_val": 0.15,
-      "w_pd": 0.80,
-      "w_pu": 0.54,
-      "w_pg": 0.60,
-      "reasoning": "Minimum channel length L=0.15um and wider channels minimise access time and maximise read/write bandwidth."
+      "l_val": 0.15, "w_pd": 0.80, "w_pu": 0.54, "w_pg": 0.60,
+      "reasoning": "Minimum channel length L=0.15um and wider channels minimise access time."
     },
     "Minimal Area": {
-      "l_val": 0.15,
-      "w_pd": 0.42,
-      "w_pu": 0.28,
-      "w_pg": 0.36,
-      "reasoning": "Minimum-width transistors to fit highest density array; cell ratio and pull-up ratio stay above DRC limits."
+      "l_val": 0.15, "w_pd": 0.42, "w_pu": 0.28, "w_pg": 0.36,
+      "reasoning": "Minimum-width transistors for highest density array."
     },
     "default": {
-      "l_val": 0.15,
-      "w_pd": 0.54,
-      "w_pu": 0.36,
-      "w_pg": 0.40,
-      "reasoning": "Standard SKY130 sizing: Cell Ratio ≈ 1.35, Pull-up Ratio ≈ 0.90 for reliable read stability and write margin."
+      "l_val": 0.15, "w_pd": 0.54, "w_pu": 0.36, "w_pg": 0.40,
+      "reasoning": "Standard SKY130 sizing: Cell Ratio ~1.35, Pull-up Ratio ~0.90."
     }
   },
 
@@ -91,29 +79,117 @@
     {"comp": "P_QB",  "pin": "IO", "net": "QB"}
   ],
 
+  "layout": {
+    "canvas": {"width": 800, "height": 500},
+    "component_positions": {
+      "M_PU1": {"x": 320, "y": 150},
+      "M_PD1": {"x": 320, "y": 300},
+      "M_PU2": {"x": 480, "y": 150},
+      "M_PD2": {"x": 480, "y": 300},
+      "M_PG1": {"x": 200, "y": 300},
+      "M_PG2": {"x": 600, "y": 300},
+      "V_VDD": {"x": 400, "y": 50},
+      "V_GND": {"x": 400, "y": 450},
+      "P_WL":  {"x": 400, "y": 390},
+      "P_BL":  {"x": 100, "y": 300},
+      "P_BLB": {"x": 700, "y": 300},
+      "P_Q":   {"x": 270, "y": 220},
+      "P_QB":  {"x": 530, "y": 220}
+    },
+    "wires": [
+      {"x1": 320, "y1": 110, "x2": 480, "y2": 110, "net": "VDD"},
+      {"x1": 400, "y1": 50,  "x2": 400, "y2": 110, "net": "VDD"},
+      {"x1": 320, "y1": 110, "x2": 320, "y2": 130, "net": "VDD"},
+      {"x1": 480, "y1": 110, "x2": 480, "y2": 130, "net": "VDD"},
+      {"x1": 320, "y1": 320, "x2": 320, "y2": 410, "net": "GND"},
+      {"x1": 480, "y1": 320, "x2": 480, "y2": 410, "net": "GND"},
+      {"x1": 320, "y1": 410, "x2": 480, "y2": 410, "net": "GND"},
+      {"x1": 400, "y1": 410, "x2": 400, "y2": 450, "net": "GND"},
+      {"x1": 320, "y1": 220, "x2": 380, "y2": 220, "net": "Q"},
+      {"x1": 380, "y1": 220, "x2": 380, "y2": 280, "net": "Q"},
+      {"x1": 380, "y1": 280, "x2": 460, "y2": 280, "net": "Q"},
+      {"x1": 320, "y1": 220, "x2": 320, "y2": 280, "net": "Q"},
+      {"x1": 220, "y1": 300, "x2": 320, "y2": 300, "net": "Q"},
+      {"x1": 480, "y1": 220, "x2": 420, "y2": 220, "net": "QB"},
+      {"x1": 420, "y1": 220, "x2": 420, "y2": 170, "net": "QB"},
+      {"x1": 420, "y1": 170, "x2": 340, "y2": 170, "net": "QB"},
+      {"x1": 480, "y1": 220, "x2": 480, "y2": 280, "net": "QB"},
+      {"x1": 580, "y1": 300, "x2": 480, "y2": 300, "net": "QB"},
+      {"x1": 400, "y1": 390, "x2": 400, "y2": 355, "net": "WL"},
+      {"x1": 200, "y1": 355, "x2": 600, "y2": 355, "net": "WL"},
+      {"x1": 200, "y1": 355, "x2": 200, "y2": 320, "net": "WL"},
+      {"x1": 600, "y1": 355, "x2": 600, "y2": 320, "net": "WL"},
+      {"x1": 100, "y1": 300, "x2": 180, "y2": 300, "net": "BL"},
+      {"x1": 700, "y1": 300, "x2": 620, "y2": 300, "net": "BLB"}
+    ]
+  },
+
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.1,
+    "x_points": 100,
+    "signals": ["WL", "BL", "BLB", "Q", "QB"],
+    "physics": {
+      "base_leakage_nw": 15.0,
+      "base_write_delay_ps": 55.0,
+      "base_tau": 0.28,
+      "snm_mv": 345,
+      "optimization_overrides": {
+        "Low Leakage": {"base_leakage_nw": 4.5,  "base_write_delay_ps": 95.0, "base_tau": 0.45},
+        "High Speed":  {"base_leakage_nw": 62.0, "base_write_delay_ps": 35.0, "base_tau": 0.18},
+        "Minimal Area":{"base_leakage_nw": 25.0, "base_write_delay_ps": 60.0, "base_tau": 0.30}
+      }
+    }
+  },
+
+  "design_intents": [
+    {
+      "decision_template": "Pull-up PMOS sizing (W={w_pu}um, L={l_val}um)",
+      "reason": "Sized smaller to reduce subthreshold leakage path to GND and maintain Pull-up Ratio < 1.0 for reliable write overwrite.",
+      "tradeoffs": "Smaller PMOS reduces leakage but limits Static Noise Margin (SNM) in read mode.",
+      "alternatives": ["Asymmetric driver ratio", "High-Vt implant custom cells"],
+      "references": ["SKY130 SRAM Cell Design Guidelines", "JEDEC SRAM Write Ability Standard"],
+      "affected_blocks": ["M_PU1", "M_PU2"]
+    },
+    {
+      "decision_template": "Pull-down NMOS sizing (W={w_pd}um, L={l_val}um)",
+      "reason": "Sized wider than access transistor to maintain Cell Ratio > 1.2, preventing inadvertent cell flip during read.",
+      "tradeoffs": "Larger gate capacitance increases dynamic power vs improved Read Static Noise Margin.",
+      "alternatives": ["Symmetrical unit-size driver", "Dual-port dual-WL layout"],
+      "references": ["PDK SRAM Cell Stability Rules", "IEEE Trans. Electron Devices - SRAM Scaling"],
+      "affected_blocks": ["M_PD1", "M_PD2"]
+    },
+    {
+      "decision_template": "Access NMOS pass-gate sizing (W={w_pg}um, L={l_val}um)",
+      "reason": "Sized as a compromise between read stability and write margin — strong enough to pull storage node during write, weak enough not to disturb it during read.",
+      "tradeoffs": "Wider access gate improves write speed but degrades read SNM.",
+      "alternatives": ["Separate read/write ports (8T topology)", "Asymmetric access transistors"],
+      "references": ["Seevinck 6T SRAM Stability Criterion", "SKY130 PDK Design Rules"],
+      "affected_blocks": ["M_PG1", "M_PG2"]
+    }
+  ],
+
   "sizing_notes": {
     "M_PU1": "Pull-up PMOS — sized small to keep Pull-up Ratio < 1.0 ensuring write overwrite succeeds.",
-    "M_PU2": "Pull-up PMOS — mirror of M_PU1 for the complementary latch half.",
     "M_PD1": "Pull-down NMOS — sized wider to maintain Cell Ratio > 1.2 preventing inadvertent read flip.",
-    "M_PD2": "Pull-down NMOS — mirror of M_PD1.",
-    "M_PG1": "Access NMOS — sized as a compromise between read stability and write margin.",
-    "M_PG2": "Access NMOS — mirror of M_PG1 on the complementary bitline."
+    "M_PG1": "Access NMOS — sized as a compromise between read stability and write margin."
   },
 
   "kg_nodes": [
-    {"id": "6T SRAM",           "type": "Circuit Block",         "description": "Standard 6-transistor Static RAM storage cell."},
-    {"id": "Cross-Coupled Latch","type": "Topology",              "description": "Positive feedback CMOS latch configuration."},
-    {"id": "Inverter",           "type": "Logic Gate",            "description": "Standard CMOS inversion driver cell."},
-    {"id": "Access Gate",        "type": "Subsystem",             "description": "Pass-transistor path controlled by the Word Line (WL)."},
-    {"id": "Static Noise Margin","type": "Metric / Constraint",   "description": "Minimum DC voltage required to flip the cell state."},
-    {"id": "Cell Ratio",         "type": "DRC Sizing Guideline",  "description": "Driver NMOS size ratio over Access NMOS size."},
-    {"id": "Pull-up Ratio",      "type": "DRC Sizing Guideline",  "description": "Access NMOS size ratio over Pull-up PMOS size."}
+    {"id": "6T SRAM",            "type": "Circuit Block",        "description": "Standard 6-transistor Static RAM storage cell."},
+    {"id": "Cross-Coupled Latch","type": "Topology",             "description": "Positive feedback CMOS latch configuration."},
+    {"id": "Inverter",           "type": "Logic Gate",           "description": "Standard CMOS inversion driver cell."},
+    {"id": "Access Gate",        "type": "Subsystem",            "description": "Pass-transistor path controlled by the Word Line (WL)."},
+    {"id": "Static Noise Margin","type": "Metric / Constraint",  "description": "Minimum DC voltage required to flip the cell state."},
+    {"id": "Cell Ratio",         "type": "DRC Sizing Guideline", "description": "Driver NMOS size ratio over Access NMOS size."},
+    {"id": "Pull-up Ratio",      "type": "DRC Sizing Guideline", "description": "Access NMOS size ratio over Pull-up PMOS size."}
   ],
   "kg_edges": [
-    {"source": "6T SRAM",            "relation": "uses",         "target": "Cross-Coupled Latch"},
-    {"source": "6T SRAM",            "relation": "uses",         "target": "Access Gate"},
-    {"source": "Cross-Coupled Latch","relation": "composed of",  "target": "Inverter"},
-    {"source": "6T SRAM",            "relation": "verified by",  "target": "Static Noise Margin"},
+    {"source": "6T SRAM",            "relation": "uses",          "target": "Cross-Coupled Latch"},
+    {"source": "6T SRAM",            "relation": "uses",          "target": "Access Gate"},
+    {"source": "Cross-Coupled Latch","relation": "composed of",   "target": "Inverter"},
+    {"source": "6T SRAM",            "relation": "verified by",   "target": "Static Noise Margin"},
     {"source": "Cross-Coupled Latch","relation": "constrained by","target": "Cell Ratio"},
     {"source": "Access Gate",        "relation": "constrained by","target": "Pull-up Ratio"}
   ]

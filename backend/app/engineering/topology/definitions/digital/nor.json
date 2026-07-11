@@ -3,83 +3,102 @@
   "variant": "NOR2",
   "canonical": "NOR Gate",
   "name": "CMOS 2-Input NOR Gate",
-  "description": "Static CMOS 2-input NOR gate. Pull-up network: two series PMOS devices (M_PU1, M_PU2) — output HIGH only when both inputs are LOW. Pull-down network: two parallel NMOS devices (M_ND1, M_ND2) — output LOW when either input is HIGH. Note: the series PMOS stack requires wider PMOS to compensate for lower hole mobility, making NOR larger than NAND in CMOS.",
+  "description": "Static CMOS 2-input NOR. Series PMOS pull-up; parallel NMOS pull-down. Output HIGH only when both inputs LOW.",
   "category": "Digital",
   "technology": ["SKY130"],
   "keywords": ["nor", "nor gate", "nor2", "2-input nor", "two input nor"],
   "dynamic": false,
   "dynamic_strategy": null,
-
   "optimizations": {
-    "High Speed": {
-      "w_pu": 2.16,
-      "w_nd": 0.54,
-      "l_val": 0.15,
-      "reasoning": "Series PMOS sized 3x single PMOS width to overcome both hole mobility and stacking penalty."
-    },
-    "Low Power": {
-      "w_pu": 1.08,
-      "w_nd": 0.36,
-      "l_val": 0.35,
-      "reasoning": "Longer channels for leakage reduction; PMOS still oversized to maintain logic margin."
-    },
-    "default": {
-      "w_pu": 1.44,
-      "w_nd": 0.36,
-      "l_val": 0.15,
-      "reasoning": "Series PMOS W = 2x single PMOS (accounts for hole mobility ratio ~2) for balanced t_pHL / t_pLH."
-    }
+    "High Speed": {"w_pu": 2.16, "w_nd": 0.54, "l_val": 0.15, "reasoning": "Series PMOS sized 3x to overcome hole mobility and stacking penalty."},
+    "Low Power":  {"w_pu": 1.08, "w_nd": 0.36, "l_val": 0.35, "reasoning": "Longer channels for leakage reduction."},
+    "default":    {"w_pu": 1.44, "w_nd": 0.36, "l_val": 0.15, "reasoning": "Series PMOS W=2x single PMOS; balanced t_pHL / t_pLH."}
   },
-
   "components": [
     {"id": "M_PU1", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
     {"id": "M_PU2", "type": "PMOS", "w_key": "w_pu", "l_key": "l_val"},
     {"id": "M_ND1", "type": "NMOS", "w_key": "w_nd", "l_key": "l_val"},
     {"id": "M_ND2", "type": "NMOS", "w_key": "w_nd", "l_key": "l_val"},
-    {"id": "V_VDD", "type": "VDD"},
-    {"id": "V_GND", "type": "GND"},
-    {"id": "P_A",   "type": "PIN",  "label": "A"},
-    {"id": "P_B",   "type": "PIN",  "label": "B"},
-    {"id": "P_Y",   "type": "PIN",  "label": "Y"}
+    {"id": "V_VDD", "type": "VDD"}, {"id": "V_GND", "type": "GND"},
+    {"id": "P_A",   "type": "PIN", "label": "A"},
+    {"id": "P_B",   "type": "PIN", "label": "B"},
+    {"id": "P_Y",   "type": "PIN", "label": "Y"}
   ],
-
   "connections": [
-    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
-    {"comp": "V_GND", "pin": "GND", "net": "GND"},
-    {"comp": "M_PU1", "pin": "S",   "net": "VDD"},
-    {"comp": "M_PU1", "pin": "B",   "net": "VDD"},
-    {"comp": "M_PU1", "pin": "G",   "net": "a_net"},
-    {"comp": "M_PU1", "pin": "D",   "net": "mid_net"},
-    {"comp": "M_PU2", "pin": "S",   "net": "mid_net"},
-    {"comp": "M_PU2", "pin": "B",   "net": "VDD"},
-    {"comp": "M_PU2", "pin": "G",   "net": "b_net"},
-    {"comp": "M_PU2", "pin": "D",   "net": "y_net"},
-    {"comp": "M_ND1", "pin": "D",   "net": "y_net"},
-    {"comp": "M_ND1", "pin": "G",   "net": "a_net"},
-    {"comp": "M_ND1", "pin": "S",   "net": "GND"},
-    {"comp": "M_ND1", "pin": "B",   "net": "GND"},
-    {"comp": "M_ND2", "pin": "D",   "net": "y_net"},
-    {"comp": "M_ND2", "pin": "G",   "net": "b_net"},
-    {"comp": "M_ND2", "pin": "S",   "net": "GND"},
-    {"comp": "M_ND2", "pin": "B",   "net": "GND"},
-    {"comp": "P_A",   "pin": "IO",  "net": "a_net"},
-    {"comp": "P_B",   "pin": "IO",  "net": "b_net"},
+    {"comp": "V_VDD", "pin": "VDD", "net": "VDD"}, {"comp": "V_GND", "pin": "GND", "net": "GND"},
+    {"comp": "M_PU1", "pin": "S",   "net": "VDD"}, {"comp": "M_PU1", "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU1", "pin": "G",   "net": "a_net"}, {"comp": "M_PU1", "pin": "D",   "net": "mid_net"},
+    {"comp": "M_PU2", "pin": "S",   "net": "mid_net"}, {"comp": "M_PU2", "pin": "B",   "net": "VDD"},
+    {"comp": "M_PU2", "pin": "G",   "net": "b_net"}, {"comp": "M_PU2", "pin": "D",   "net": "y_net"},
+    {"comp": "M_ND1", "pin": "D",   "net": "y_net"}, {"comp": "M_ND1", "pin": "G",   "net": "a_net"},
+    {"comp": "M_ND1", "pin": "S",   "net": "GND"},  {"comp": "M_ND1", "pin": "B",   "net": "GND"},
+    {"comp": "M_ND2", "pin": "D",   "net": "y_net"}, {"comp": "M_ND2", "pin": "G",   "net": "b_net"},
+    {"comp": "M_ND2", "pin": "S",   "net": "GND"},  {"comp": "M_ND2", "pin": "B",   "net": "GND"},
+    {"comp": "P_A",   "pin": "IO",  "net": "a_net"}, {"comp": "P_B",   "pin": "IO",  "net": "b_net"},
     {"comp": "P_Y",   "pin": "IO",  "net": "y_net"}
   ],
-
+  "layout": {
+    "canvas": {"width": 560, "height": 420},
+    "component_positions": {
+      "M_PU1": {"x": 310, "y": 140}, "M_PU2": {"x": 310, "y": 230},
+      "M_ND1": {"x": 230, "y": 330}, "M_ND2": {"x": 390, "y": 330},
+      "V_VDD": {"x": 310, "y": 60},  "V_GND": {"x": 310, "y": 400},
+      "P_A":   {"x": 100, "y": 190}, "P_B":   {"x": 100, "y": 280},
+      "P_Y":   {"x": 470, "y": 280}
+    },
+    "wires": [
+      {"x1": 310, "y1": 60,  "x2": 310, "y2": 120, "net": "VDD"},
+      {"x1": 310, "y1": 160, "x2": 310, "y2": 210, "net": "mid_net"},
+      {"x1": 310, "y1": 250, "x2": 310, "y2": 300, "net": "y_net"},
+      {"x1": 310, "y1": 300, "x2": 230, "y2": 300, "net": "y_net"},
+      {"x1": 310, "y1": 300, "x2": 390, "y2": 300, "net": "y_net"},
+      {"x1": 310, "y1": 280, "x2": 470, "y2": 280, "net": "y_net"},
+      {"x1": 230, "y1": 350, "x2": 230, "y2": 380, "net": "GND"},
+      {"x1": 390, "y1": 350, "x2": 390, "y2": 380, "net": "GND"},
+      {"x1": 230, "y1": 380, "x2": 390, "y2": 380, "net": "GND"},
+      {"x1": 310, "y1": 380, "x2": 310, "y2": 400, "net": "GND"},
+      {"x1": 100, "y1": 190, "x2": 200, "y2": 190, "net": "a_net"},
+      {"x1": 200, "y1": 140, "x2": 200, "y2": 330, "net": "a_net"},
+      {"x1": 100, "y1": 280, "x2": 170, "y2": 280, "net": "b_net"},
+      {"x1": 170, "y1": 230, "x2": 170, "y2": 330, "net": "b_net"}
+    ]
+  },
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.05,
+    "x_points": 100,
+    "signals": ["A", "B", "Y"],
+    "physics": {
+      "base_td_ps": 38.0,
+      "optimization_overrides": {
+        "High Speed": {"base_td_ps": 18.0},
+        "Low Power":  {"base_td_ps": 80.0}
+      }
+    }
+  },
+  "design_intents": [
+    {
+      "decision_template": "Series PMOS pull-up stack (W_PU={w_pu}um, L={l_val}um) sized 2x single PMOS",
+      "reason": "Series PMOS stack suffers from both hole mobility (~2x lower than electron) AND series resistance stacking penalty. Sizing W=2× compensates the combined effect, achieving symmetric logic threshold. This is why NOR is larger than NAND in CMOS.",
+      "tradeoffs": "NOR gate is ~2x the area of a NAND gate with equivalent drive strength. NAND is preferred for area-critical designs.",
+      "alternatives": ["Replace deep NOR with NAND + inversion (DeMorgan)", "Pseudo-NMOS NOR (smaller, but static power)"],
+      "references": ["CMOS VLSI Design - Weste Ch.5", "Logic Gate Sizing - Sutherland Sproull Harris"],
+      "affected_blocks": ["M_PU1", "M_PU2"]
+    }
+  ],
   "sizing_notes": {
     "M_PU1": "Series pull-up PMOS — top of stack; wider than single PMOS to overcome hole mobility + stacking.",
-    "M_PU2": "Series pull-up PMOS — bottom of stack; body terminal connected to VDD to avoid forward-biased junction issues.",
-    "M_ND1": "Parallel pull-down NMOS — for input A; no stacking penalty, standard width.",
+    "M_PU2": "Series pull-up PMOS — bottom of stack.",
+    "M_ND1": "Parallel pull-down NMOS — no stacking penalty, standard width.",
     "M_ND2": "Parallel pull-down NMOS — for input B."
   },
-
   "kg_nodes": [
     {"id": "NOR Gate", "type": "Logic Gate", "description": "2-input CMOS NOR universal logic gate."}
   ],
   "kg_edges": [
-    {"source": "NOR Gate", "relation": "composed of",  "target": "Inverter"},
+    {"source": "NOR Gate", "relation": "composed of",   "target": "Inverter"},
     {"source": "NOR Gate", "relation": "constrained by","target": "Series Stack"},
-    {"source": "NOR Gate", "relation": "depends on",   "target": "Propagation Delay"}
+    {"source": "NOR Gate", "relation": "depends on",    "target": "Propagation Delay"}
   ]
 }

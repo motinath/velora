@@ -3,40 +3,18 @@
   "variant": "CMOS",
   "canonical": "Ring Oscillator",
   "name": "CMOS Ring Oscillator — Odd-Stage Inverter Loop",
-  "description": "Odd-stage feedback inverter chain. Each stage is a CMOS inverter (PMOS + NMOS). The feedback from the last stage to the first creates 360° phase shift (each inverter contributes 180°, the odd count ensures net inversion). Oscillation frequency = 1/(2·N·t_pd) where N is the stage count and t_pd is the per-stage propagation delay.",
+  "description": "Odd-stage feedback inverter chain. Oscillation frequency = 1/(2·N·t_pd) where N is stage count and t_pd is per-stage propagation delay.",
   "category": "Digital",
   "technology": ["SKY130"],
   "keywords": ["ring oscillator", "ring osc", "oscillator", "clock gen", "clock generator", "ring", "vco ring"],
   "dynamic": true,
   "dynamic_strategy": "ring_oscillator_expand",
-
   "optimizations": {
-    "Low Leakage": {
-      "w_p": 0.54,
-      "w_n": 0.36,
-      "l_val": 0.35,
-      "reasoning": "Increased channel length L=0.35um reduces subthreshold leakage; frequency decreases due to higher t_pd."
-    },
-    "Low Power": {
-      "w_p": 0.54,
-      "w_n": 0.36,
-      "l_val": 0.35,
-      "reasoning": "Longer channels and standard widths: minimal switching power, acceptable jitter for clock reference use."
-    },
-    "High Speed": {
-      "w_p": 1.62,
-      "w_n": 1.08,
-      "l_val": 0.15,
-      "reasoning": "Minimum length L=0.15um and wide channels (3x standard) minimise t_pd for maximum oscillation frequency."
-    },
-    "default": {
-      "w_p": 0.54,
-      "w_n": 0.36,
-      "l_val": 0.15,
-      "reasoning": "Standard SKY130 inverter sizing; symmetric rise/fall times, good jitter performance."
-    }
+    "Low Leakage": {"w_p": 0.54, "w_n": 0.36, "l_val": 0.35, "reasoning": "Increased L=0.35um reduces subthreshold leakage."},
+    "Low Power":   {"w_p": 0.54, "w_n": 0.36, "l_val": 0.35, "reasoning": "Longer channels reduce switching power."},
+    "High Speed":  {"w_p": 1.62, "w_n": 1.08, "l_val": 0.15, "reasoning": "Minimum L=0.15um and wide channels maximise frequency."},
+    "default":     {"w_p": 0.54, "w_n": 0.36, "l_val": 0.15, "reasoning": "Standard SKY130 inverter sizing."}
   },
-
   "base_components": [
     {"id": "V_VDD", "type": "VDD"},
     {"id": "V_GND", "type": "GND"},
@@ -46,23 +24,60 @@
     {"comp": "V_VDD", "pin": "VDD", "net": "VDD"},
     {"comp": "V_GND", "pin": "GND", "net": "GND"}
   ],
-
-  "sizing_notes": {
-    "M_P{i}": "Inverter PMOS stage i — wider than NMOS to compensate lower hole mobility; ensures symmetric duty cycle.",
-    "M_N{i}": "Inverter NMOS stage i — baseline reference width; propagation delay is primarily determined by this device."
+  "layout": {
+    "dynamic_layout": true,
+    "canvas": {"width": 800, "height": 440},
+    "stage_x_start": 150,
+    "stage_x_step": 130,
+    "pmos_y": 180,
+    "nmos_y": 300,
+    "vdd_y": 50,
+    "gnd_y": 420,
+    "out_pin_x_offset": 60,
+    "out_pin_y": 240
   },
-
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.05,
+    "x_points": 100,
+    "signals": ["OSC_OUT"],
+    "physics": {
+      "base_td_ps": 50.0,
+      "base_power_uw": 85.0,
+      "startup_tau_ns": 1.0,
+      "optimization_overrides": {
+        "High Speed":  {"base_td_ps": 25.0,  "base_power_uw": 245.0},
+        "Low Power":   {"base_td_ps": 120.0, "base_power_uw": 18.0},
+        "Low Leakage": {"base_td_ps": 120.0, "base_power_uw": 18.0}
+      }
+    }
+  },
+  "design_intents": [
+    {
+      "decision_template": "Odd-stage inverter loop with {stages} stages (W_P={w_p}um, W_N={w_n}um, L={l_val}um)",
+      "reason": "An odd number of inverting stages ensures the loop phase shift is exactly 360° (each inverter contributes 180°), which is the necessary condition for sustained oscillation. Even-stage loops have two stable states and latch up.",
+      "tradeoffs": "More stages reduce frequency but improve phase noise (jitter). Fewer stages maximise frequency but increase jitter.",
+      "alternatives": ["LC tank oscillator (lower jitter)", "Crystal oscillator (best stability)", "VCO with varactor tuning"],
+      "references": ["CMOS VLSI Design - Weste & Harris Ch.11", "Ring Oscillator Phase Noise - Hajimiri & Lee JSSC 1999"],
+      "affected_blocks": ["M_P1", "M_N1"]
+    }
+  ],
+  "sizing_notes": {
+    "M_P{i}": "Inverter PMOS stage i — wider than NMOS to compensate lower hole mobility.",
+    "M_N{i}": "Inverter NMOS stage i — reference width; propagation delay is primarily determined by this device."
+  },
   "kg_nodes": [
-    {"id": "Ring Oscillator",      "type": "Circuit Block",     "description": "Odd-stage feedback loop generating self-sustaining clock signals."},
-    {"id": "Oscillation Frequency","type": "Metric / Constraint","description": "Cycle frequency determined by stage count and per-stage delay."},
-    {"id": "Propagation Delay",    "type": "Metric / Constraint","description": "Transistor charge/discharge time per inverter stage."},
-    {"id": "Jitter",               "type": "Metric / Constraint","description": "Frequency cycle deviation caused by supply and substrate noise."}
+    {"id": "Ring Oscillator",       "type": "Circuit Block",      "description": "Odd-stage feedback loop generating self-sustaining clock signals."},
+    {"id": "Oscillation Frequency", "type": "Metric / Constraint","description": "Cycle frequency determined by stage count and per-stage delay."},
+    {"id": "Propagation Delay",     "type": "Metric / Constraint","description": "Transistor charge/discharge time per inverter stage."},
+    {"id": "Jitter",                "type": "Metric / Constraint","description": "Frequency cycle deviation caused by supply and substrate noise."}
   ],
   "kg_edges": [
-    {"source": "Ring Oscillator",      "relation": "composed of", "target": "Inverter"},
-    {"source": "Ring Oscillator",      "relation": "depends on",  "target": "Propagation Delay"},
-    {"source": "Oscillation Frequency","relation": "limited by",  "target": "Propagation Delay"},
-    {"source": "Ring Oscillator",      "relation": "verified by", "target": "Oscillation Frequency"},
-    {"source": "Oscillation Frequency","relation": "affects",     "target": "Jitter"}
+    {"source": "Ring Oscillator",       "relation": "composed of", "target": "Inverter"},
+    {"source": "Ring Oscillator",       "relation": "depends on",  "target": "Propagation Delay"},
+    {"source": "Oscillation Frequency", "relation": "limited by",  "target": "Propagation Delay"},
+    {"source": "Ring Oscillator",       "relation": "verified by", "target": "Oscillation Frequency"},
+    {"source": "Oscillation Frequency", "relation": "affects",     "target": "Jitter"}
   ]
 }

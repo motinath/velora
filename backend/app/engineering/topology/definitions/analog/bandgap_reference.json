@@ -3,51 +3,29 @@
   "variant": "CMOS",
   "canonical": "Bandgap Reference",
   "name": "CMOS Bandgap Voltage Reference",
-  "description": "Classic Brokaw-style bandgap reference implemented in CMOS using parasitic PNP bipolar transistors (substrate BJTs available in SKY130). Combines a PTAT (Proportional to Absolute Temperature) voltage from the ΔVbe path with the negative temperature coefficient of Vbe to produce a temperature-stable ~1.2V reference voltage.",
+  "description": "Brokaw-style bandgap reference. Combines PTAT voltage (from ΔVbe) with the negative TC of Vbe to produce a temperature-stable ~1.2V reference.",
   "category": "Analog",
   "technology": ["SKY130"],
   "keywords": ["bandgap", "bandgap reference", "voltage reference", "vref", "temperature stable reference", "brokaw", "bgr"],
   "dynamic": false,
   "dynamic_strategy": null,
-
   "optimizations": {
-    "Low Power": {
-      "w_op": 2.0,
-      "l_op": 1.0,
-      "w_cur": 1.5,
-      "l_cur": 0.5,
-      "reasoning": "Reduced bias current through op-amp and current mirrors to minimise quiescent power."
-    },
-    "High Precision": {
-      "w_op": 5.0,
-      "l_op": 2.0,
-      "w_cur": 3.0,
-      "l_cur": 1.0,
-      "reasoning": "Long-channel devices minimise mismatch and 1/f noise; wider input pair reduces offset."
-    },
-    "default": {
-      "w_op": 3.0,
-      "l_op": 1.0,
-      "w_cur": 2.0,
-      "l_cur": 0.5,
-      "reasoning": "Balanced precision and quiescent current for standard 1.8V SKY130 supply."
-    }
+    "Low Power":      {"w_op": 2.0, "l_op": 1.0, "w_cur": 1.5, "l_cur": 0.5, "reasoning": "Reduced bias current to minimise quiescent power."},
+    "High Precision": {"w_op": 5.0, "l_op": 2.0, "w_cur": 3.0, "l_cur": 1.0, "reasoning": "Long-channel devices minimise mismatch and 1/f noise."},
+    "default":        {"w_op": 3.0, "l_op": 1.0, "w_cur": 2.0, "l_cur": 0.5, "reasoning": "Balanced precision and quiescent current for 1.8V SKY130."}
   },
-
   "components": [
-    {"id": "M_P1",   "type": "PMOS", "w_key": "w_cur", "l_key": "l_cur"},
-    {"id": "M_P2",   "type": "PMOS", "w_key": "w_cur", "l_key": "l_cur"},
-    {"id": "M_OP_P1","type": "PMOS", "w_key": "w_op",  "l_key": "l_op"},
-    {"id": "M_OP_P2","type": "PMOS", "w_key": "w_op",  "l_key": "l_op"},
-    {"id": "M_OP_N1","type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
-    {"id": "M_OP_N2","type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
-    {"id": "M_TAIL", "type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
-    {"id": "V_VDD",  "type": "VDD"},
-    {"id": "V_GND",  "type": "GND"},
-    {"id": "P_VREF", "type": "PIN",  "label": "V_REF"},
-    {"id": "P_EN",   "type": "PIN",  "label": "EN"}
+    {"id": "M_P1",    "type": "PMOS", "w_key": "w_cur", "l_key": "l_cur"},
+    {"id": "M_P2",    "type": "PMOS", "w_key": "w_cur", "l_key": "l_cur"},
+    {"id": "M_OP_P1", "type": "PMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_OP_P2", "type": "PMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_OP_N1", "type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_OP_N2", "type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "M_TAIL",  "type": "NMOS", "w_key": "w_op",  "l_key": "l_op"},
+    {"id": "V_VDD",   "type": "VDD"}, {"id": "V_GND",   "type": "GND"},
+    {"id": "P_VREF",  "type": "PIN",  "label": "V_REF"},
+    {"id": "P_EN",    "type": "PIN",  "label": "EN"}
   ],
-
   "connections": [
     {"comp": "V_VDD",   "pin": "VDD", "net": "VDD"},
     {"comp": "V_GND",   "pin": "GND", "net": "GND"},
@@ -82,25 +60,74 @@
     {"comp": "P_VREF",  "pin": "IO",  "net": "branch2"},
     {"comp": "P_EN",    "pin": "IO",  "net": "EN"}
   ],
-
+  "layout": {
+    "canvas": {"width": 760, "height": 500},
+    "component_positions": {
+      "M_P1":    {"x": 250, "y": 150}, "M_P2":    {"x": 500, "y": 150},
+      "M_OP_P1": {"x": 250, "y": 240}, "M_OP_P2": {"x": 500, "y": 240},
+      "M_OP_N1": {"x": 250, "y": 330}, "M_OP_N2": {"x": 500, "y": 330},
+      "M_TAIL":  {"x": 375, "y": 410},
+      "V_VDD":   {"x": 375, "y": 60},  "V_GND":   {"x": 375, "y": 470},
+      "P_VREF":  {"x": 590, "y": 110}, "P_EN":    {"x": 150, "y": 410}
+    },
+    "wires": [
+      {"x1": 250, "y1": 100, "x2": 500, "y2": 100, "net": "VDD"},
+      {"x1": 375, "y1": 60,  "x2": 375, "y2": 100, "net": "VDD"},
+      {"x1": 250, "y1": 100, "x2": 250, "y2": 130, "net": "VDD"},
+      {"x1": 500, "y1": 100, "x2": 500, "y2": 130, "net": "VDD"},
+      {"x1": 250, "y1": 170, "x2": 250, "y2": 220, "net": "branch1"},
+      {"x1": 500, "y1": 170, "x2": 500, "y2": 220, "net": "branch2"},
+      {"x1": 500, "y1": 110, "x2": 590, "y2": 110, "net": "branch2"},
+      {"x1": 250, "y1": 175, "x2": 500, "y2": 175, "net": "mirror_gate"},
+      {"x1": 375, "y1": 430, "x2": 375, "y2": 470, "net": "GND"},
+      {"x1": 250, "y1": 350, "x2": 250, "y2": 390, "net": "tail_node"},
+      {"x1": 500, "y1": 350, "x2": 500, "y2": 390, "net": "tail_node"},
+      {"x1": 250, "y1": 390, "x2": 500, "y2": 390, "net": "tail_node"},
+      {"x1": 375, "y1": 390, "x2": 375, "y2": 410, "net": "tail_node"}
+    ]
+  },
+  "simulation": {
+    "analysis_type": "operating_point",
+    "x_label": "Temperature (°C)",
+    "x_step": 5.0,
+    "x_points": 80,
+    "x_start": -40.0,
+    "signals": ["V_REF"],
+    "physics": {
+      "vref_target_v": 1.205,
+      "tc_ppm_per_c_default": 25.0,
+      "quiescent_current_ua_default": 12.0,
+      "optimization_overrides": {
+        "High Precision": {"tc_ppm_per_c_default": 5.0,  "quiescent_current_ua_default": 45.0},
+        "Low Power":      {"tc_ppm_per_c_default": 50.0, "quiescent_current_ua_default": 2.5}
+      }
+    }
+  },
+  "design_intents": [
+    {
+      "decision_template": "PTAT and complementary TC summation (W_OP={w_op}um, L_OP={l_op}um)",
+      "reason": "The op-amp servo forces equal currents through both branches. Branch1 has a single BJT (Vbe1), branch2 has N BJTs in series (N×Vbe2). The ΔVbe = VT×ln(N) is PTAT (positive TC). Adding ΔVbe to Vbe (negative TC) with the correct weighting resistor ratio cancels the TC to first order at ~1.205V.",
+      "tradeoffs": "Second-order curvature causes ~10ppm/°C residual error. Trimming is required for < 5ppm/°C.",
+      "alternatives": ["BJT bandgap with external resistors", "Switched-capacitor bandgap for untrimmed < 0.1%"],
+      "references": ["Banba et al. CMOS Bandgap JSSC 1999", "Razavi Analog CMOS Ch.11"],
+      "affected_blocks": ["M_P1", "M_P2", "M_OP_N1", "M_OP_N2"]
+    }
+  ],
   "sizing_notes": {
     "M_P1":    "PTAT current source PMOS — channels current through branch1 containing single BJT.",
-    "M_P2":    "Reference current PMOS — channels current through branch2 with N:1 BJT stack; Vbe difference drives PTAT.",
-    "M_OP_P1": "Op-amp PMOS load — part of the servo amplifier that forces equal currents in both branches.",
-    "M_OP_N1": "Op-amp input NMOS — senses branch1 voltage.",
-    "M_OP_N2": "Op-amp input NMOS — senses branch2 voltage (VREF node).",
+    "M_P2":    "Reference current PMOS — channels current through branch2 with N:1 BJT stack.",
+    "M_OP_P1": "Op-amp PMOS load — servo amplifier forces equal branch currents.",
     "M_TAIL":  "Tail current source — biased by feedback to set op-amp operating point."
   },
-
   "kg_nodes": [
-    {"id": "Bandgap Reference",   "type": "Circuit Block",     "description": "Temperature-stable voltage reference based on semiconductor bandgap energy."},
-    {"id": "PTAT Voltage",        "type": "Mechanism",         "description": "Proportional-to-Absolute-Temperature voltage derived from ΔVbe of matched BJTs."},
-    {"id": "Temperature Coefficient","type": "Metric / Constraint","description": "Variation of reference voltage with temperature (ppm/°C)."}
+    {"id": "Bandgap Reference",       "type": "Circuit Block",      "description": "Temperature-stable voltage reference based on semiconductor bandgap energy."},
+    {"id": "PTAT Voltage",            "type": "Mechanism",          "description": "Proportional-to-Absolute-Temperature voltage derived from ΔVbe."},
+    {"id": "Temperature Coefficient", "type": "Metric / Constraint","description": "Variation of reference voltage with temperature (ppm/°C)."}
   ],
   "kg_edges": [
-    {"source": "Bandgap Reference",  "relation": "uses",        "target": "PTAT Voltage"},
-    {"source": "Bandgap Reference",  "relation": "uses",        "target": "Differential Pair"},
-    {"source": "Bandgap Reference",  "relation": "verified by", "target": "Temperature Coefficient"},
-    {"source": "PTAT Voltage",       "relation": "cancels",     "target": "Temperature Coefficient"}
+    {"source": "Bandgap Reference", "relation": "uses",        "target": "PTAT Voltage"},
+    {"source": "Bandgap Reference", "relation": "uses",        "target": "Differential Pair"},
+    {"source": "Bandgap Reference", "relation": "verified by", "target": "Temperature Coefficient"},
+    {"source": "PTAT Voltage",      "relation": "cancels",     "target": "Temperature Coefficient"}
   ]
 }

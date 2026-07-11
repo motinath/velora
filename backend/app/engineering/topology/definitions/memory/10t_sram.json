@@ -2,8 +2,8 @@
   "family": "SRAM",
   "variant": "10T",
   "canonical": "10T SRAM",
-  "name": "10T SRAM Cell — Sub-threshold / Near-Vt with Differential Read Port",
-  "description": "10-transistor SRAM optimised for sub-threshold and near-Vt operation. Combines the 8T separate read port (eliminating read disturb) with a single write-assist PMOS (M_WA) that boosts the internal node during write, restoring write margin lost at low VDD. The result is a cell that functions correctly from 0.4V to 1.2V.",
+  "name": "10T SRAM Cell — Sub-threshold / Near-Vt with Write-Assist",
+  "description": "10-transistor SRAM for sub-threshold and near-Vt operation. Combines the 8T separate read port (eliminating read disturb) with write-assist PMOS (M_WA1, M_WA2) that boost internal nodes during write, restoring write margin lost at low VDD. Functions from 0.4V to 1.2V.",
   "category": "Memory",
   "technology": ["SKY130"],
   "keywords": ["10t sram", "10t", "10 transistor sram", "sub threshold sram", "near vt sram", "ultra low voltage sram", "sram 10t"],
@@ -12,30 +12,15 @@
 
   "optimizations": {
     "Ultra Low Power": {
-      "l_val": 0.50,
-      "w_pd": 0.54,
-      "w_pu": 0.36,
-      "w_pg": 0.40,
-      "w_rd": 0.36,
-      "w_wa": 0.28,
-      "reasoning": "Near-Vt operation. Long channels suppress leakage; write-assist PMOS compensates write margin loss at 0.4V VDD."
+      "l_val": 0.50, "w_pd": 0.54, "w_pu": 0.36, "w_pg": 0.40, "w_rd": 0.36, "w_wa": 0.28,
+      "reasoning": "Near-Vt operation. Long channels suppress leakage; write-assist compensates write margin loss at 0.4V VDD."
     },
     "Low Leakage": {
-      "l_val": 0.35,
-      "w_pd": 0.60,
-      "w_pu": 0.40,
-      "w_pg": 0.45,
-      "w_rd": 0.42,
-      "w_wa": 0.36,
+      "l_val": 0.35, "w_pd": 0.60, "w_pu": 0.40, "w_pg": 0.45, "w_rd": 0.42, "w_wa": 0.36,
       "reasoning": "Balanced leakage suppression with sufficient write assist strength."
     },
     "default": {
-      "l_val": 0.25,
-      "w_pd": 0.54,
-      "w_pu": 0.36,
-      "w_pg": 0.40,
-      "w_rd": 0.36,
-      "w_wa": 0.28,
+      "l_val": 0.25, "w_pd": 0.54, "w_pu": 0.36, "w_pg": 0.40, "w_rd": 0.36, "w_wa": 0.28,
       "reasoning": "Standard near-Vt sizing. Write-assist PMOS is weak to avoid contention with pull-up."
     }
   },
@@ -116,23 +101,103 @@
     {"comp": "P_QB",   "pin": "IO",  "net": "QB"}
   ],
 
+  "layout": {
+    "canvas": {"width": 920, "height": 560},
+    "component_positions": {
+      "M_PU1":  {"x": 310, "y": 140}, "M_PD1":  {"x": 310, "y": 290},
+      "M_PU2":  {"x": 490, "y": 140}, "M_PD2":  {"x": 490, "y": 290},
+      "M_PG1":  {"x": 190, "y": 290}, "M_PG2":  {"x": 610, "y": 290},
+      "M_RD1":  {"x": 730, "y": 200}, "M_RD2":  {"x": 730, "y": 330},
+      "M_WA1":  {"x": 310, "y": 80},  "M_WA2":  {"x": 490, "y": 80},
+      "V_VDD":  {"x": 400, "y": 30},  "V_GND":  {"x": 400, "y": 510},
+      "P_WL":   {"x": 400, "y": 430}, "P_BL":   {"x": 90,  "y": 290},
+      "P_BLB":  {"x": 630, "y": 430}, "P_RWL":  {"x": 790, "y": 200},
+      "P_RBL":  {"x": 790, "y": 160}, "P_WAE":  {"x": 400, "y": 460},
+      "P_Q":    {"x": 255, "y": 210}, "P_QB":   {"x": 545, "y": 210}
+    },
+    "wires": [
+      {"x1": 310, "y1": 100, "x2": 490, "y2": 100, "net": "VDD"},
+      {"x1": 400, "y1": 30,  "x2": 400, "y2": 100, "net": "VDD"},
+      {"x1": 310, "y1": 310, "x2": 310, "y2": 430, "net": "GND"},
+      {"x1": 490, "y1": 310, "x2": 490, "y2": 430, "net": "GND"},
+      {"x1": 310, "y1": 430, "x2": 490, "y2": 430, "net": "GND"},
+      {"x1": 400, "y1": 430, "x2": 400, "y2": 510, "net": "GND"},
+      {"x1": 310, "y1": 210, "x2": 370, "y2": 210, "net": "Q"},
+      {"x1": 370, "y1": 210, "x2": 370, "y2": 270, "net": "Q"},
+      {"x1": 370, "y1": 270, "x2": 470, "y2": 270, "net": "Q"},
+      {"x1": 210, "y1": 290, "x2": 310, "y2": 290, "net": "Q"},
+      {"x1": 490, "y1": 210, "x2": 430, "y2": 210, "net": "QB"},
+      {"x1": 430, "y1": 210, "x2": 430, "y2": 160, "net": "QB"},
+      {"x1": 430, "y1": 160, "x2": 330, "y2": 160, "net": "QB"},
+      {"x1": 610, "y1": 290, "x2": 490, "y2": 290, "net": "QB"},
+      {"x1": 400, "y1": 430, "x2": 400, "y2": 395, "net": "WL"},
+      {"x1": 190, "y1": 395, "x2": 610, "y2": 395, "net": "WL"},
+      {"x1": 190, "y1": 395, "x2": 190, "y2": 310, "net": "WL"},
+      {"x1": 610, "y1": 395, "x2": 610, "y2": 310, "net": "WL"},
+      {"x1": 90,  "y1": 290, "x2": 170, "y2": 290, "net": "BL"},
+      {"x1": 730, "y1": 170, "x2": 790, "y2": 170, "net": "RBL"},
+      {"x1": 730, "y1": 200, "x2": 790, "y2": 200, "net": "RWL"},
+      {"x1": 310, "y1": 60,  "x2": 400, "y2": 60,  "net": "WAE"},
+      {"x1": 490, "y1": 60,  "x2": 400, "y2": 60,  "net": "WAE"},
+      {"x1": 400, "y1": 60,  "x2": 400, "y2": 460, "net": "WAE"}
+    ]
+  },
+
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.1,
+    "x_points": 100,
+    "signals": ["WL", "BL", "BLB", "Q", "QB", "WAE", "RWL", "RBL"],
+    "physics": {
+      "base_leakage_nw": 3.5,
+      "base_write_delay_ps": 80.0,
+      "base_tau": 0.45,
+      "snm_mv": 280,
+      "write_assist": true,
+      "optimization_overrides": {
+        "Ultra Low Power": {"base_leakage_nw": 0.6,  "base_write_delay_ps": 200.0, "base_tau": 0.90},
+        "Low Leakage":     {"base_leakage_nw": 1.8,  "base_write_delay_ps": 120.0, "base_tau": 0.60}
+      }
+    }
+  },
+
+  "design_intents": [
+    {
+      "decision_template": "Write-assist PMOS (W={w_wa}um, L={l_val}um) on both storage nodes",
+      "reason": "At sub-threshold VDD (<0.6V) write margin collapses because the pull-up PMOS cannot be turned fully OFF. M_WA1/M_WA2 are activated (WAE pulled LOW) during write to temporarily boost the node being written HIGH, overcoming this limitation.",
+      "tradeoffs": "Write-assist pulse must be precisely timed — too long causes contention; too short provides no benefit. Adds WAE control signal.",
+      "alternatives": ["Negative bitline write assist", "Boosted wordline voltage"],
+      "references": ["Sinangil et al. 10T SRAM ISSCC 2009", "Sub-Vt SRAM Design Survey - IEEE"],
+      "affected_blocks": ["M_WA1", "M_WA2"]
+    },
+    {
+      "decision_template": "Separate read port sizing (W_RD={w_rd}um, L={l_val}um)",
+      "reason": "Read disturb is catastrophic at near-Vt because the regenerative latch has no margin to recover. The dedicated read stack (M_RD1 + M_RD2) eliminates this failure mode entirely.",
+      "tradeoffs": "Adds RWL and RBL control lines.",
+      "alternatives": ["Single-ended 8T (without write assist)", "CAM cell with destructive read"],
+      "references": ["8T/10T SRAM Comparison - JSSC 2010"],
+      "affected_blocks": ["M_RD1", "M_RD2"]
+    }
+  ],
+
   "sizing_notes": {
     "M_WA1": "Write-assist PMOS — activated (gate LOW) during write; pulls the node being written HIGH to overcome near-Vt write margin loss.",
     "M_WA2": "Write-assist PMOS — complementary side; sized weakly to avoid fighting the write-access path.",
-    "M_RD1": "Read-access NMOS — same role as 8T read port, isolates storage node during read.",
+    "M_RD1": "Read-access NMOS — isolates storage node during read.",
     "M_RD2": "Read-driver NMOS — gate driven by Q; discharges RBL when Q=1."
   },
 
   "kg_nodes": [
-    {"id": "10T SRAM",        "type": "Circuit Block",  "description": "10-transistor sub-threshold SRAM combining separate read port with write-assist PMOS."},
-    {"id": "Write Assist",    "type": "Technique",      "description": "Technique that boosts internal storage nodes during write to restore write margin at low VDD."},
-    {"id": "Sub-threshold",   "type": "Operating Regime","description": "Operation below Vt where currents are exponentially dependent on gate voltage."}
+    {"id": "10T SRAM",      "type": "Circuit Block",   "description": "10-transistor sub-threshold SRAM with separate read port and write-assist PMOS."},
+    {"id": "Write Assist",  "type": "Technique",       "description": "Technique that boosts internal storage nodes during write to restore write margin at low VDD."},
+    {"id": "Sub-threshold", "type": "Operating Regime","description": "Operation below Vt where currents are exponentially dependent on gate voltage."}
   ],
   "kg_edges": [
-    {"source": "10T SRAM",   "relation": "extends",     "target": "8T SRAM"},
-    {"source": "10T SRAM",   "relation": "implements",  "target": "Write Assist"},
+    {"source": "10T SRAM",   "relation": "extends",      "target": "8T SRAM"},
+    {"source": "10T SRAM",   "relation": "implements",   "target": "Write Assist"},
     {"source": "10T SRAM",   "relation": "optimised for","target": "Sub-threshold"},
-    {"source": "10T SRAM",   "relation": "verified by", "target": "Static Noise Margin"},
-    {"source": "Write Assist","relation": "improves",   "target": "Static Noise Margin"}
+    {"source": "10T SRAM",   "relation": "verified by",  "target": "Static Noise Margin"},
+    {"source": "Write Assist","relation": "improves",    "target": "Static Noise Margin"}
   ]
 }

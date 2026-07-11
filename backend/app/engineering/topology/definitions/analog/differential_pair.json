@@ -3,58 +3,30 @@
   "variant": "Basic",
   "canonical": "Differential Pair",
   "name": "NMOS Differential Pair with Active PMOS Mirror Load",
-  "description": "5-transistor differential amplifier. NMOS input pair (M_IN1, M_IN2) amplifies the difference signal. PMOS current mirror load (M_L1 diode-connected, M_L2 mirror) converts differential current to single-ended output. Tail NMOS (M_TAIL) provides high-impedance bias current. Foundation of most OTA and op-amp topologies.",
+  "description": "5-transistor differential amplifier. NMOS input pair amplifies the difference signal. PMOS current mirror load converts differential current to single-ended output. Tail NMOS provides high-impedance bias current.",
   "category": "Analog",
   "technology": ["SKY130"],
   "keywords": ["differential pair", "diff pair", "differential amplifier", "opamp input stage", "diff amp", "differential"],
   "dynamic": false,
   "dynamic_strategy": null,
-
   "optimizations": {
-    "Low Leakage": {
-      "w_in": 2.0,
-      "w_load": 3.0,
-      "w_tail": 2.0,
-      "l_val": 0.5,
-      "reasoning": "Longer channels reduce leakage on all branches while maintaining adequate gm."
-    },
-    "High Speed": {
-      "w_in": 4.0,
-      "w_load": 6.0,
-      "w_tail": 4.0,
-      "l_val": 0.15,
-      "reasoning": "Minimum length, wide channels maximise gm and bandwidth."
-    },
-    "High Gain": {
-      "w_in": 5.0,
-      "w_load": 4.0,
-      "w_tail": 3.0,
-      "l_val": 1.0,
-      "reasoning": "Long channel lengths increase ro, boosting voltage gain Av = gm·ro."
-    },
-    "default": {
-      "w_in": 2.0,
-      "w_load": 3.0,
-      "w_tail": 2.0,
-      "l_val": 0.25,
-      "reasoning": "Symmetric balanced sizing for SKY130."
-    }
+    "Low Leakage": {"w_in": 2.0, "w_load": 3.0, "w_tail": 2.0, "l_val": 0.5,  "reasoning": "Longer channels reduce leakage on all branches."},
+    "High Speed":  {"w_in": 4.0, "w_load": 6.0, "w_tail": 4.0, "l_val": 0.15, "reasoning": "Minimum length, wide channels maximise gm and bandwidth."},
+    "High Gain":   {"w_in": 5.0, "w_load": 4.0, "w_tail": 3.0, "l_val": 1.0,  "reasoning": "Long channel lengths increase ro, boosting voltage gain Av = gm·ro."},
+    "default":     {"w_in": 2.0, "w_load": 3.0, "w_tail": 2.0, "l_val": 0.25, "reasoning": "Symmetric balanced sizing for SKY130."}
   },
-
   "components": [
     {"id": "M_IN1",  "type": "NMOS", "w_key": "w_in",   "l_key": "l_val"},
     {"id": "M_IN2",  "type": "NMOS", "w_key": "w_in",   "l_key": "l_val"},
     {"id": "M_L1",   "type": "PMOS", "w_key": "w_load", "l_key": "l_val"},
     {"id": "M_L2",   "type": "PMOS", "w_key": "w_load", "l_key": "l_val"},
     {"id": "M_TAIL", "type": "NMOS", "w_key": "w_tail", "l_key": "l_val"},
-    {"id": "V_VDD",  "type": "VDD"},
-    {"id": "V_GND",  "type": "GND"},
-    {"id": "P_INP",  "type": "PIN",  "label": "IN_P"},
-    {"id": "P_INM",  "type": "PIN",  "label": "IN_M"},
-    {"id": "P_OUT",  "type": "PIN",  "label": "V_OUT"},
-    {"id": "P_VBIAS","type": "PIN",  "label": "V_BIAS"}
+    {"id": "V_VDD",  "type": "VDD"}, {"id": "V_GND", "type": "GND"},
+    {"id": "P_INP",  "type": "PIN", "label": "IN_P"},
+    {"id": "P_INM",  "type": "PIN", "label": "IN_M"},
+    {"id": "P_OUT",  "type": "PIN", "label": "V_OUT"},
+    {"id": "P_VBIAS","type": "PIN", "label": "V_BIAS"}
   ],
-
   "connections": [
     {"comp": "V_VDD",  "pin": "VDD", "net": "VDD"},
     {"comp": "V_GND",  "pin": "GND", "net": "GND"},
@@ -84,24 +56,99 @@
     {"comp": "P_VBIAS","pin": "IO",  "net": "vbias_net"}
   ],
 
+  "layout": {
+    "canvas": {"width": 760, "height": 500},
+    "component_positions": {
+      "M_L1":   {"x": 300, "y": 150}, "M_L2":   {"x": 500, "y": 150},
+      "M_IN1":  {"x": 300, "y": 280}, "M_IN2":  {"x": 500, "y": 280},
+      "M_TAIL": {"x": 400, "y": 380},
+      "V_VDD":  {"x": 400, "y": 50},  "V_GND":  {"x": 400, "y": 470},
+      "P_INP":  {"x": 190, "y": 280}, "P_INM":  {"x": 610, "y": 280},
+      "P_OUT":  {"x": 500, "y": 110}, "P_VBIAS":{"x": 280, "y": 380}
+    },
+    "wires": [
+      {"x1": 300, "y1": 110, "x2": 500, "y2": 110, "net": "VDD"},
+      {"x1": 400, "y1": 50,  "x2": 400, "y2": 110, "net": "VDD"},
+      {"x1": 300, "y1": 110, "x2": 300, "y2": 130, "net": "VDD"},
+      {"x1": 500, "y1": 110, "x2": 500, "y2": 130, "net": "VDD"},
+      {"x1": 300, "y1": 200, "x2": 300, "y2": 150, "net": "load_gate"},
+      {"x1": 300, "y1": 150, "x2": 500, "y2": 150, "net": "load_gate"},
+      {"x1": 300, "y1": 200, "x2": 300, "y2": 260, "net": "load_gate"},
+      {"x1": 500, "y1": 170, "x2": 500, "y2": 260, "net": "out_net"},
+      {"x1": 190, "y1": 280, "x2": 300, "y2": 280, "net": "inp_net"},
+      {"x1": 610, "y1": 280, "x2": 500, "y2": 280, "net": "inm_net"},
+      {"x1": 300, "y1": 300, "x2": 300, "y2": 335, "net": "tail_node"},
+      {"x1": 500, "y1": 300, "x2": 500, "y2": 335, "net": "tail_node"},
+      {"x1": 300, "y1": 335, "x2": 500, "y2": 335, "net": "tail_node"},
+      {"x1": 400, "y1": 335, "x2": 400, "y2": 360, "net": "tail_node"},
+      {"x1": 280, "y1": 380, "x2": 380, "y2": 380, "net": "vbias_net"},
+      {"x1": 400, "y1": 400, "x2": 400, "y2": 440, "net": "GND"},
+      {"x1": 400, "y1": 440, "x2": 400, "y2": 470, "net": "GND"}
+    ]
+  },
+
+  "simulation": {
+    "analysis_type": "dc_transfer",
+    "x_label": "V_ID (V)",
+    "x_step": 0.02,
+    "x_points": 100,
+    "x_start": -1.0,
+    "signals": ["VOUT_P", "VOUT_N"],
+    "physics": {
+      "gain_default": 24.0,
+      "bw_default_mhz": 180.0,
+      "optimization_overrides": {
+        "High Speed": {"gain_default": 12.0, "bw_default_mhz": 850.0},
+        "High Gain":  {"gain_default": 48.0, "bw_default_mhz": 60.0}
+      }
+    }
+  },
+
+  "design_intents": [
+    {
+      "decision_template": "Input NMOS pair (W={w_in}um, L={l_val}um) — matched",
+      "reason": "The transconductance gm of the input pair is the primary gain parameter. Wider channels increase gm and thus voltage gain Av = gm × Rout. Both transistors must be laid out symmetrically to minimise input-referred offset voltage.",
+      "tradeoffs": "Wider input pair increases parasitic capacitance, reducing bandwidth. Longer channels increase gain but slow settling.",
+      "alternatives": ["PMOS input pair (lower flicker noise)", "Folded cascode input stage"],
+      "references": ["Razavi - Design of Analog CMOS ICs Ch.3", "Differential Pair Offset Analysis - Tsividis"],
+      "affected_blocks": ["M_IN1", "M_IN2"]
+    },
+    {
+      "decision_template": "Active PMOS mirror load (W={w_load}um, L={l_val}um)",
+      "reason": "M_L1 is diode-connected, setting the gate voltage that M_L2 mirrors. This converts the differential current change into a single-ended output at M_L2's drain, doubling the effective transconductance compared to a resistive load.",
+      "tradeoffs": "Mirror mismatch between M_L1 and M_L2 introduces systematic output offset. Long L reduces mismatch.",
+      "alternatives": ["Resistive load (simpler but lower gain)", "Telescopic cascode load (higher gain)"],
+      "references": ["Active Load Differential Pair Analysis", "IEEE JSSC - Mirror Mismatch Effects"],
+      "affected_blocks": ["M_L1", "M_L2"]
+    },
+    {
+      "decision_template": "Tail current source NMOS (W={w_tail}um, L={l_val}um)",
+      "reason": "Provides a constant high-impedance current source for the differential pair tail. High output resistance suppresses common-mode signals, giving high CMRR.",
+      "tradeoffs": "High tail impedance requires adequate headroom (VDS_tail > Vdsat). Reduces output swing.",
+      "alternatives": ["Ideal current source", "Resistor tail (lower CMRR)", "Cascode tail (higher CMRR)"],
+      "references": ["Analog CMOS ICs Ch.3 - Razavi"],
+      "affected_blocks": ["M_TAIL"]
+    }
+  ],
+
   "sizing_notes": {
-    "M_IN1": "Input NMOS — wider channels maximise gm and thus gain.",
-    "M_IN2": "Input NMOS — must match M_IN1 exactly; mismatch creates input-referred offset.",
-    "M_L1":  "Diode-connected PMOS load — sets the gate voltage shared with M_L2.",
-    "M_L2":  "Mirror PMOS load — replicates M_L1 current into output node, converting differential to single-ended.",
-    "M_TAIL":"Tail NMOS current source — biased by V_BIAS; sized twice the input pair width to carry total tail current."
+    "M_IN1":  "Input NMOS — wider channels maximise gm and thus gain.",
+    "M_IN2":  "Input NMOS — must match M_IN1 exactly; mismatch creates input-referred offset.",
+    "M_L1":   "Diode-connected PMOS load — sets the gate voltage shared with M_L2.",
+    "M_L2":   "Mirror PMOS load — replicates M_L1 current into output node.",
+    "M_TAIL": "Tail NMOS current source — biased by V_BIAS; sized twice the input pair width."
   },
 
   "kg_nodes": [
-    {"id": "Differential Pair",    "type": "Circuit Block",     "description": "Symmetrical transistor pair amplifying difference signals."},
-    {"id": "Common Mode Rejection","type": "Metric / Constraint","description": "Suppression ratio of common-mode noise vs differential signal."},
-    {"id": "Active Load",          "type": "Subsystem",         "description": "PMOS mirror configuration acting as high-impedance load."},
-    {"id": "Tail Current Source",  "type": "Subsystem",         "description": "NMOS current sink holding total branch current constant."}
+    {"id": "Differential Pair",    "type": "Circuit Block",      "description": "Symmetrical transistor pair amplifying difference signals."},
+    {"id": "Common Mode Rejection","type": "Metric / Constraint", "description": "Suppression ratio of common-mode noise vs differential signal."},
+    {"id": "Active Load",          "type": "Subsystem",          "description": "PMOS mirror configuration acting as high-impedance load."},
+    {"id": "Tail Current Source",  "type": "Subsystem",          "description": "NMOS current sink holding total branch current constant."}
   ],
   "kg_edges": [
-    {"source": "Differential Pair", "relation": "uses",        "target": "Active Load"},
-    {"source": "Differential Pair", "relation": "uses",        "target": "Tail Current Source"},
-    {"source": "Tail Current Source","relation": "composed of","target": "Current Mirror"},
-    {"source": "Differential Pair", "relation": "verified by", "target": "Common Mode Rejection"}
+    {"source": "Differential Pair",  "relation": "uses",        "target": "Active Load"},
+    {"source": "Differential Pair",  "relation": "uses",        "target": "Tail Current Source"},
+    {"source": "Tail Current Source","relation": "composed of", "target": "Current Mirror"},
+    {"source": "Differential Pair",  "relation": "verified by", "target": "Common Mode Rejection"}
   ]
 }

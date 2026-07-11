@@ -274,7 +274,10 @@ class MultiAgentOrchestrator:
             ctx.plan["components"],
             ctx.plan["connections"],
         )
-        ctx.schematic = schematic_renderer.render(ctx.graph)
+        ctx.schematic = schematic_renderer.render(
+            ctx.graph,
+            topology_type=ctx.reqs.get("type"),   # registry-driven layout lookup
+        )
         ctx.netlist = netlist_generator.generate(
             ctx.graph,
             design_name=ctx.reqs.get("type", "Generic Subcircuit"),

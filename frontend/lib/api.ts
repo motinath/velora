@@ -86,6 +86,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ prompt })
     }),
+  listTopologies: () => request("/designs/topologies"),
   getDesignHistory: (projectId: number) => request(`/designs/project/${projectId}/history`),
   getDesignDetail: (designId: number) => request(`/designs/${designId}`),
 

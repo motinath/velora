@@ -65,13 +65,16 @@ class RequirementParser:
         #
         # Priority order:
         #   a) Registry keyword match on the prompt itself (highest priority)
-        #   b) project_design_type fallback — ONLY when the prompt has NO match
+        #      BUT: if the match is "generic" (no variant in prompt), prefer
+        #      project_design_type if it's a more specific variant
+        #   b) project_design_type fallback — when prompt has NO match OR
+        #      prompt match is generic (e.g. just "sram")
         #   c) Hard default "6T SRAM" (backwards compatibility)
         #
         # IMPORTANT: project_design_type is never allowed to OVERRIDE a
-        # successful prompt match.  The whole point of the registry is that
-        # "design a 9T SRAM" produces "9T SRAM" regardless of what the
-        # project was originally created as.
+        # successful prompt match UNLESS the prompt match is generic.
+        # The whole point of the registry is that "design a 9T SRAM" produces
+        # "9T SRAM" regardless of what the project was originally created as.
         # ------------------------------------------------------------------
         canonical, opt_label = topology_registry.match_prompt_full(prompt_lower)
 
@@ -80,13 +83,41 @@ class RequirementParser:
             f"opt={opt_label!r} (from prompt: {prompt_lower[:80]!r})"
         )
 
-        # Fallback: use project_design_type ONLY if prompt gave NO match at all
-        if not canonical and project_design_type:
-            canonical = topology_registry.match_prompt(project_design_type.lower()) or project_design_type
-            logger.info(
-                f"[RequirementParser] No prompt match — using project_design_type "
-                f"fallback: '{canonical}'"
-            )
+        # Check if prompt match is "generic" (no variant specificity)
+        # e.g. "sram" matches 6T SRAM, but user might want 9T SRAM from project_design_type
+        is_generic_match = False
+        if canonical and project_design_type:
+            # Check if the prompt contains any variant-specific keywords
+            prompt_has_variant = False
+            for variant_kw in ["6t", "7t", "8t", "9t", "10t", "cascode", "strongarm", "folded"]:
+                if variant_kw in prompt_lower:
+                    prompt_has_variant = True
+                    break
+            
+            # If prompt has no variant but matched a topology, it's a generic match
+            if not prompt_has_variant:
+                is_generic_match = True
+                logger.info(
+                    f"[RequirementParser] Prompt match '{canonical}' is generic "
+                    f"(no variant in prompt). Checking project_design_type '{project_design_type}'."
+                )
+
+        # Fallback: use project_design_type if:
+        # - prompt gave NO match at all, OR
+        # - prompt match is generic and project_design_type is more specific
+        if not canonical or is_generic_match:
+            if project_design_type:
+                project_canonical = topology_registry.match_prompt(project_design_type.lower()) or project_design_type
+                # Use project_design_type if it's a valid topology
+                if project_canonical:
+                    canonical = project_canonical
+                    logger.info(
+                        f"[RequirementParser] Using project_design_type "
+                        f"fallback: '{canonical}'"
+                    )
+                    # Re-extract optimization from the new topology
+                    tpl = topology_registry.get(canonical) or {}
+                    opt_label = topology_registry._extract_optimization(prompt_lower, tpl)
 
         # Last resort: default to 6T SRAM (maintains backwards compatibility)
         if not canonical:

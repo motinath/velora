@@ -11,6 +11,32 @@ from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/designs", tags=["designs"])
 
+
+@router.get("/topologies", tags=["topologies"])
+def list_topologies():
+    """
+    Returns all topology definitions known to the registry.
+    Used by the frontend to populate the topology selector dropdown
+    and dynamically populate the optimization options.
+    """
+    from app.engineering.topology.registry import topology_registry
+    result = []
+    for tpl in topology_registry.all_topologies():
+        result.append({
+            "canonical":     tpl.get("canonical", ""),
+            "name":          tpl.get("name", ""),
+            "family":        tpl.get("family", ""),
+            "variant":       tpl.get("variant", ""),
+            "category":      tpl.get("category", ""),
+            "description":   tpl.get("description", ""),
+            "keywords":      tpl.get("keywords", []),
+            "technology":    tpl.get("technology", []),
+            "optimizations": list(tpl.get("optimizations", {}).keys()),
+        })
+    # Sort alphabetically by category then canonical name for consistent UI order
+    result.sort(key=lambda t: (t["category"], t["canonical"]))
+    return result
+
 @router.post("/project/{project_id}/generate", response_model=DesignResponse)
 def generate_circuit(
     project_id: int,

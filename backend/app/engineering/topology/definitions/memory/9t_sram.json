@@ -12,27 +12,15 @@
 
   "optimizations": {
     "Low Leakage": {
-      "l_val": 0.35,
-      "w_pd": 0.54,
-      "w_pu": 0.36,
-      "w_pg": 0.40,
-      "w_slp": 0.54,
+      "l_val": 0.35, "w_pd": 0.54, "w_pu": 0.36, "w_pg": 0.40, "w_slp": 0.54,
       "reasoning": "Long channel sleep transistors (L=0.35um) maximise off-state resistance; core sized at standard ratios."
     },
     "Ultra Low Power": {
-      "l_val": 0.50,
-      "w_pd": 0.42,
-      "w_pu": 0.28,
-      "w_pg": 0.36,
-      "w_slp": 0.42,
+      "l_val": 0.50, "w_pd": 0.42, "w_pu": 0.28, "w_pg": 0.36, "w_slp": 0.42,
       "reasoning": "Near-threshold operation: maximum channel length on all paths cuts both dynamic and leakage power."
     },
     "default": {
-      "l_val": 0.25,
-      "w_pd": 0.54,
-      "w_pu": 0.36,
-      "w_pg": 0.40,
-      "w_slp": 0.54,
+      "l_val": 0.25, "w_pd": 0.54, "w_pu": 0.36, "w_pg": 0.40, "w_slp": 0.54,
       "reasoning": "Balanced sizing; sleep transistor sized equal to pull-down to avoid series resistance bottleneck during write."
     }
   },
@@ -99,6 +87,98 @@
     {"comp": "P_QB",   "pin": "IO",  "net": "QB"}
   ],
 
+  "layout": {
+    "canvas": {"width": 860, "height": 540},
+    "component_positions": {
+      "M_PU1":  {"x": 320, "y": 130},
+      "M_PD1":  {"x": 320, "y": 280},
+      "M_SLP1": {"x": 320, "y": 370},
+      "M_PU2":  {"x": 480, "y": 130},
+      "M_PD2":  {"x": 480, "y": 280},
+      "M_SLP2": {"x": 480, "y": 370},
+      "M_PG1":  {"x": 190, "y": 280},
+      "M_PG2":  {"x": 610, "y": 280},
+      "P_SLP":  {"x": 400, "y": 460},
+      "V_VDD":  {"x": 400, "y": 40},
+      "V_GND":  {"x": 400, "y": 500},
+      "P_WL":   {"x": 400, "y": 430},
+      "P_BL":   {"x":  90, "y": 280},
+      "P_BLB":  {"x": 710, "y": 280},
+      "P_Q":    {"x": 260, "y": 200},
+      "P_QB":   {"x": 540, "y": 200}
+    },
+    "wires": [
+      {"x1": 320, "y1": 90,  "x2": 480, "y2": 90,  "net": "VDD"},
+      {"x1": 400, "y1": 40,  "x2": 400, "y2": 90,  "net": "VDD"},
+      {"x1": 320, "y1": 90,  "x2": 320, "y2": 110, "net": "VDD"},
+      {"x1": 480, "y1": 90,  "x2": 480, "y2": 110, "net": "VDD"},
+      {"x1": 320, "y1": 390, "x2": 320, "y2": 450, "net": "GND"},
+      {"x1": 480, "y1": 390, "x2": 480, "y2": 450, "net": "GND"},
+      {"x1": 320, "y1": 450, "x2": 480, "y2": 450, "net": "GND"},
+      {"x1": 400, "y1": 450, "x2": 400, "y2": 500, "net": "GND"},
+      {"x1": 320, "y1": 300, "x2": 320, "y2": 350, "net": "vss_q"},
+      {"x1": 320, "y1": 350, "x2": 320, "y2": 370, "net": "vss_q"},
+      {"x1": 480, "y1": 300, "x2": 480, "y2": 350, "net": "vss_qb"},
+      {"x1": 480, "y1": 350, "x2": 480, "y2": 370, "net": "vss_qb"},
+      {"x1": 320, "y1": 200, "x2": 380, "y2": 200, "net": "Q"},
+      {"x1": 380, "y1": 200, "x2": 380, "y2": 265, "net": "Q"},
+      {"x1": 380, "y1": 265, "x2": 460, "y2": 265, "net": "Q"},
+      {"x1": 210, "y1": 280, "x2": 320, "y2": 280, "net": "Q"},
+      {"x1": 480, "y1": 200, "x2": 420, "y2": 200, "net": "QB"},
+      {"x1": 420, "y1": 200, "x2": 420, "y2": 150, "net": "QB"},
+      {"x1": 420, "y1": 150, "x2": 340, "y2": 150, "net": "QB"},
+      {"x1": 590, "y1": 280, "x2": 480, "y2": 280, "net": "QB"},
+      {"x1": 400, "y1": 430, "x2": 400, "y2": 395, "net": "WL"},
+      {"x1": 190, "y1": 395, "x2": 610, "y2": 395, "net": "WL"},
+      {"x1": 190, "y1": 395, "x2": 190, "y2": 300, "net": "WL"},
+      {"x1": 610, "y1": 395, "x2": 610, "y2": 300, "net": "WL"},
+      {"x1": 90,  "y1": 280, "x2": 170, "y2": 280, "net": "BL"},
+      {"x1": 710, "y1": 280, "x2": 630, "y2": 280, "net": "BLB"},
+      {"x1": 320, "y1": 460, "x2": 400, "y2": 460, "net": "SLP"},
+      {"x1": 480, "y1": 460, "x2": 400, "y2": 460, "net": "SLP"},
+      {"x1": 400, "y1": 460, "x2": 400, "y2": 500, "net": "SLP"}
+    ]
+  },
+
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.1,
+    "x_points": 100,
+    "signals": ["WL", "BL", "BLB", "Q", "QB", "SLP"],
+    "physics": {
+      "base_leakage_nw": 2.0,
+      "base_write_delay_ps": 70.0,
+      "base_tau": 0.40,
+      "snm_mv": 310,
+      "sleep_gating": true,
+      "standby_leakage_reduction_factor": 0.02,
+      "optimization_overrides": {
+        "Low Leakage":    {"base_leakage_nw": 0.8,  "base_write_delay_ps": 110.0, "base_tau": 0.55},
+        "Ultra Low Power":{"base_leakage_nw": 0.3,  "base_write_delay_ps": 180.0, "base_tau": 0.80}
+      }
+    }
+  },
+
+  "design_intents": [
+    {
+      "decision_template": "Sleep transistor NMOS (W={w_slp}um, L={l_val}um) in pull-down path",
+      "reason": "M_SLP1 and M_SLP2 are series-stacked below each pull-down NMOS. When SLP=0 both sleep transistors turn OFF, completely blocking the subthreshold leakage current path to GND in standby.",
+      "tradeoffs": "~50% leakage reduction in standby at the cost of ~25% slower write time (two transistors in series must both be ON during write).",
+      "alternatives": ["MTCMOS power gating at block level", "High-Vt pull-down transistors"],
+      "references": ["Kawasaki et al. 9T SRAM JSSC 2008", "Near-Threshold Computing - Dreslinski"],
+      "affected_blocks": ["M_SLP1", "M_SLP2"]
+    },
+    {
+      "decision_template": "Pull-down NMOS series combination sizing (W_PD={w_pd}um, W_SLP={w_slp}um)",
+      "reason": "Cell Ratio is computed over the effective series resistance of M_PD1 + M_SLP1. Both transistors must be sized to maintain CR > 1.2 even with sleep transistor ON.",
+      "tradeoffs": "Wider M_SLP increases write drive current but also increases standby leakage when SLP=1.",
+      "alternatives": ["Separate sleep control per bitcell column"],
+      "references": ["9T SRAM Cell Ratio Analysis - ISSCC"],
+      "affected_blocks": ["M_PD1", "M_PD2", "M_SLP1", "M_SLP2"]
+    }
+  ],
+
   "sizing_notes": {
     "M_SLP1": "Sleep NMOS — gate driven by SLP control; OFF in standby to cut leakage path from pull-down to GND.",
     "M_SLP2": "Sleep NMOS — mirror of M_SLP1 for the complementary latch half.",
@@ -106,15 +186,15 @@
   },
 
   "kg_nodes": [
-    {"id": "9T SRAM",         "type": "Circuit Block",     "description": "9-transistor low-leakage SRAM with power-gating sleep transistors."},
+    {"id": "9T SRAM",         "type": "Circuit Block",      "description": "9-transistor low-leakage SRAM with power-gating sleep transistors."},
     {"id": "Sleep Transistor","type": "Power-Gating Device","description": "Series NMOS that cuts the subthreshold leakage path in standby."},
-    {"id": "Power Gating",    "type": "Technique",         "description": "Technique of isolating a circuit block from supply/ground in standby to eliminate leakage."}
+    {"id": "Power Gating",    "type": "Technique",          "description": "Technique of isolating a circuit block from supply/ground in standby to eliminate leakage."}
   ],
   "kg_edges": [
-    {"source": "9T SRAM",          "relation": "extends",     "target": "6T SRAM"},
-    {"source": "9T SRAM",          "relation": "uses",        "target": "Sleep Transistor"},
-    {"source": "9T SRAM",          "relation": "implements",  "target": "Power Gating"},
-    {"source": "9T SRAM",          "relation": "verified by", "target": "Static Noise Margin"},
-    {"source": "Sleep Transistor", "relation": "reduces",     "target": "Static Noise Margin"}
+    {"source": "9T SRAM",          "relation": "extends",    "target": "6T SRAM"},
+    {"source": "9T SRAM",          "relation": "uses",       "target": "Sleep Transistor"},
+    {"source": "9T SRAM",          "relation": "implements", "target": "Power Gating"},
+    {"source": "9T SRAM",          "relation": "verified by","target": "Static Noise Margin"},
+    {"source": "Sleep Transistor", "relation": "reduces",    "target": "Static Noise Margin"}
   ]
 }

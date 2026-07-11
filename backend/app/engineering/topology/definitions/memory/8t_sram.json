@@ -3,7 +3,7 @@
   "variant": "8T",
   "canonical": "8T SRAM",
   "name": "8T SRAM Cell — Separate Read Port",
-  "description": "8-transistor SRAM cell with an isolated single-ended read port (M_RD1, M_RD2) that eliminates read-disturb by decoupling the read path from the storage nodes. Write path remains identical to 6T. Area overhead ~25% over 6T but read SNM improves dramatically.",
+  "description": "8-transistor SRAM cell with an isolated single-ended read port (M_RD1, M_RD2) that eliminates read-disturb by decoupling the read path from the storage nodes.",
   "category": "Memory",
   "technology": ["SKY130"],
   "keywords": ["8t sram", "8t", "8 transistor sram", "read disturb free sram", "sram 8t"],
@@ -12,27 +12,15 @@
 
   "optimizations": {
     "Low Leakage": {
-      "l_val": 0.25,
-      "w_pd": 0.60,
-      "w_pu": 0.40,
-      "w_pg": 0.45,
-      "w_rd": 0.36,
-      "reasoning": "Longer channel lengths reduce standby leakage on all six core transistors. Read port sized conservatively."
+      "l_val": 0.25, "w_pd": 0.60, "w_pu": 0.40, "w_pg": 0.45, "w_rd": 0.36,
+      "reasoning": "Longer channel lengths reduce standby leakage. Read port sized conservatively."
     },
     "High Speed": {
-      "l_val": 0.15,
-      "w_pd": 0.84,
-      "w_pu": 0.54,
-      "w_pg": 0.60,
-      "w_rd": 0.72,
+      "l_val": 0.15, "w_pd": 0.84, "w_pu": 0.54, "w_pg": 0.60, "w_rd": 0.72,
       "reasoning": "Minimum length and wide channels for fast read via the dedicated read port."
     },
     "default": {
-      "l_val": 0.15,
-      "w_pd": 0.54,
-      "w_pu": 0.36,
-      "w_pg": 0.40,
-      "w_rd": 0.36,
+      "l_val": 0.15, "w_pd": 0.54, "w_pu": 0.36, "w_pg": 0.40, "w_rd": 0.36,
       "reasoning": "Standard sizing. Read port NMOS sized to drive bitline within one cycle."
     }
   },
@@ -101,21 +89,102 @@
     {"comp": "P_QB",   "pin": "IO",  "net": "QB"}
   ],
 
+  "layout": {
+    "canvas": {"width": 860, "height": 540},
+    "component_positions": {
+      "M_PU1": {"x": 320, "y": 150}, "M_PD1": {"x": 320, "y": 300},
+      "M_PU2": {"x": 480, "y": 150}, "M_PD2": {"x": 480, "y": 300},
+      "M_PG1": {"x": 200, "y": 300}, "M_PG2": {"x": 600, "y": 300},
+      "M_RD1": {"x": 720, "y": 200}, "M_RD2": {"x": 720, "y": 330},
+      "V_VDD": {"x": 400, "y": 50},  "V_GND": {"x": 400, "y": 490},
+      "P_WL":  {"x": 400, "y": 400}, "P_BL":  {"x": 100, "y": 300},
+      "P_BLB": {"x": 620, "y": 420}, "P_RWL": {"x": 780, "y": 200},
+      "P_RBL": {"x": 780, "y": 160}, "P_Q":   {"x": 270, "y": 220},
+      "P_QB":  {"x": 530, "y": 220}
+    },
+    "wires": [
+      {"x1": 320, "y1": 110, "x2": 480, "y2": 110, "net": "VDD"},
+      {"x1": 400, "y1": 50,  "x2": 400, "y2": 110, "net": "VDD"},
+      {"x1": 320, "y1": 110, "x2": 320, "y2": 130, "net": "VDD"},
+      {"x1": 480, "y1": 110, "x2": 480, "y2": 130, "net": "VDD"},
+      {"x1": 320, "y1": 320, "x2": 320, "y2": 420, "net": "GND"},
+      {"x1": 480, "y1": 320, "x2": 480, "y2": 420, "net": "GND"},
+      {"x1": 320, "y1": 420, "x2": 480, "y2": 420, "net": "GND"},
+      {"x1": 400, "y1": 420, "x2": 400, "y2": 490, "net": "GND"},
+      {"x1": 320, "y1": 220, "x2": 380, "y2": 220, "net": "Q"},
+      {"x1": 380, "y1": 220, "x2": 380, "y2": 285, "net": "Q"},
+      {"x1": 380, "y1": 285, "x2": 460, "y2": 285, "net": "Q"},
+      {"x1": 320, "y1": 220, "x2": 320, "y2": 285, "net": "Q"},
+      {"x1": 220, "y1": 300, "x2": 320, "y2": 300, "net": "Q"},
+      {"x1": 480, "y1": 220, "x2": 420, "y2": 220, "net": "QB"},
+      {"x1": 420, "y1": 220, "x2": 420, "y2": 170, "net": "QB"},
+      {"x1": 420, "y1": 170, "x2": 340, "y2": 170, "net": "QB"},
+      {"x1": 480, "y1": 220, "x2": 480, "y2": 285, "net": "QB"},
+      {"x1": 580, "y1": 300, "x2": 480, "y2": 300, "net": "QB"},
+      {"x1": 400, "y1": 400, "x2": 400, "y2": 360, "net": "WL"},
+      {"x1": 200, "y1": 360, "x2": 600, "y2": 360, "net": "WL"},
+      {"x1": 200, "y1": 360, "x2": 200, "y2": 320, "net": "WL"},
+      {"x1": 600, "y1": 360, "x2": 600, "y2": 320, "net": "WL"},
+      {"x1": 100, "y1": 300, "x2": 180, "y2": 300, "net": "BL"},
+      {"x1": 720, "y1": 160, "x2": 780, "y2": 160, "net": "RBL"},
+      {"x1": 720, "y1": 200, "x2": 780, "y2": 200, "net": "RWL"},
+      {"x1": 680, "y1": 330, "x2": 720, "y2": 330, "net": "Q"},
+      {"x1": 720, "y1": 220, "x2": 720, "y2": 310, "net": "rd_mid"}
+    ]
+  },
+
+  "simulation": {
+    "analysis_type": "transient",
+    "x_label": "Time (ns)",
+    "x_step": 0.1,
+    "x_points": 100,
+    "signals": ["WL", "BL", "BLB", "Q", "QB", "RWL", "RBL"],
+    "physics": {
+      "base_leakage_nw": 14.0,
+      "base_write_delay_ps": 55.0,
+      "base_tau": 0.28,
+      "snm_mv": 380,
+      "optimization_overrides": {
+        "Low Leakage": {"base_leakage_nw": 4.0, "base_write_delay_ps": 90.0, "base_tau": 0.44},
+        "High Speed":  {"base_leakage_nw": 58.0,"base_write_delay_ps": 32.0, "base_tau": 0.16}
+      }
+    }
+  },
+
+  "design_intents": [
+    {
+      "decision_template": "Separate read port NMOS stack (W={w_rd}um, L={l_val}um)",
+      "reason": "Dedicated read port (M_RD1+M_RD2) isolates the storage node from the bitline during read, completely eliminating read-disturb failures.",
+      "tradeoffs": "~25% area overhead vs 6T in exchange for significantly improved read SNM and reliability.",
+      "alternatives": ["6T SRAM with sense amplifier offset correction", "Dual-port 10T with write-assist"],
+      "references": ["Chang et al. 8T SRAM ISSCC 2005", "SKY130 SRAM Design Notes"],
+      "affected_blocks": ["M_RD1", "M_RD2"]
+    },
+    {
+      "decision_template": "Core latch sizing identical to 6T (W_PD={w_pd}um, W_PU={w_pu}um)",
+      "reason": "Write path is unchanged from 6T; same Cell Ratio and Pull-up Ratio constraints apply.",
+      "tradeoffs": "Write margin unchanged; only read path is improved.",
+      "alternatives": ["Asymmetric sizing to further improve write margin"],
+      "references": ["PDK SRAM Stability Rules"],
+      "affected_blocks": ["M_PU1", "M_PU2", "M_PD1", "M_PD2"]
+    }
+  ],
+
   "sizing_notes": {
     "M_RD1": "Read-access NMOS — gate driven by separate RWL; isolates storage node from bitline discharge.",
     "M_RD2": "Read-driver NMOS — gate driven by internal Q; discharges RBL only when Q=1, no disturb."
   },
 
   "kg_nodes": [
-    {"id": "8T SRAM",         "type": "Circuit Block",       "description": "8-transistor SRAM with read-disturb-free separate read port."},
-    {"id": "Read Disturb",    "type": "Failure Mode",        "description": "Inadvertent cell flip caused by read bitline discharge through storage node."},
-    {"id": "Separate Read Port","type": "Subsystem",         "description": "Isolated NMOS stack that reads Q without touching the storage node."}
+    {"id": "8T SRAM",          "type": "Circuit Block",  "description": "8-transistor SRAM with read-disturb-free separate read port."},
+    {"id": "Read Disturb",     "type": "Failure Mode",   "description": "Inadvertent cell flip caused by read bitline discharge through storage node."},
+    {"id": "Separate Read Port","type": "Subsystem",     "description": "Isolated NMOS stack that reads Q without touching the storage node."}
   ],
   "kg_edges": [
-    {"source": "8T SRAM",          "relation": "extends",      "target": "6T SRAM"},
-    {"source": "8T SRAM",          "relation": "eliminates",   "target": "Read Disturb"},
-    {"source": "8T SRAM",          "relation": "uses",         "target": "Separate Read Port"},
-    {"source": "8T SRAM",          "relation": "verified by",  "target": "Static Noise Margin"},
+    {"source": "8T SRAM",           "relation": "extends",     "target": "6T SRAM"},
+    {"source": "8T SRAM",           "relation": "eliminates",  "target": "Read Disturb"},
+    {"source": "8T SRAM",           "relation": "uses",        "target": "Separate Read Port"},
+    {"source": "8T SRAM",           "relation": "verified by", "target": "Static Noise Margin"},
     {"source": "Separate Read Port","relation": "composed of", "target": "Access Gate"}
   ]
 }
