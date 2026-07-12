@@ -33,9 +33,11 @@ export function GlobalHeader({
           {isSidebarOpen ? <PanelLeftClose className="w-[18px] h-[18px]" strokeWidth={1.5} /> : <PanelLeftOpen className="w-[18px] h-[18px]" strokeWidth={1.5} />}
         </button>
         <div className="flex items-center gap-2 text-xs text-slate-500 font-sans font-medium">
-          <span className="font-bold text-slate-850 truncate uppercase">
-            {currentView === "overview" ? "Projects" : currentView}
-          </span>
+          {currentView !== "projects" && (
+            <span className="font-bold text-slate-850 truncate uppercase">
+              {currentView === "overview" ? "Projects" : currentView}
+            </span>
+          )}
           {activeProject && (currentView === "overview" || currentView === "workspace") && (
             <>
               <span className="text-slate-300">/</span>

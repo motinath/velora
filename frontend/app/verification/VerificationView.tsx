@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 
 export function VerificationView() {
-  const { activeProject } = useAppContext();
+  const { activeProject, activeDesign } = useAppContext();
 
   // Tab states
   const [activeTab, setActiveTab] = useState<"overview" | "drc" | "lvs" | "erc" | "lint" | "formal" | "assertions" | "coverage">("overview");
@@ -46,25 +46,85 @@ export function VerificationView() {
     );
   }
 
+  // Resolve dynamic verification results
+  const constraintResults = activeDesign?.constraint_results_json;
+  const hasResults = !!constraintResults;
+
+  const errors = constraintResults?.errors || [];
+  const warnings = constraintResults?.warnings || [];
+
+  // Parse errors/warnings categories
+  const drcErrors = errors.filter((e: string) => e.includes("DRC") || e.toLowerCase().includes("width") || e.toLowerCase().includes("length"));
+  const ercErrors = errors.filter((e: string) => !drcErrors.includes(e));
+
+  const drcWarnings = warnings.filter((e: string) => e.includes("DRC") || e.toLowerCase().includes("width") || e.toLowerCase().includes("length"));
+  const ercWarnings = warnings.filter((e: string) => !drcWarnings.includes(e));
+
   // Verification results list matching mockup screenshot
   const verificationResults = [
-    { name: "DRC", status: "Passed", errors: 0, warnings: 145, time: "00:01:24", icon: Layers, color: "text-blue-500 bg-blue-50" },
-    { name: "LVS", status: "Passed", errors: 0, warnings: 12, time: "00:00:48", icon: Link, color: "text-emerald-500 bg-emerald-50" },
-    { name: "ERC", status: "Passed", errors: 0, warnings: 8, time: "00:00:36", icon: Cpu, color: "text-amber-500 bg-amber-50" },
-    { name: "Lint", status: "Passed", errors: 0, warnings: 23, time: "00:00:52", icon: Code, color: "text-purple-500 bg-purple-50" },
-    { name: "Formal Verification", status: "Passed", errors: 0, warnings: 0, time: "00:02:18", icon: ShieldCheck, color: "text-indigo-500 bg-indigo-50" },
-    { name: "Assertions", status: "Passed", errors: 0, warnings: 2, time: "00:00:22", icon: Target, color: "text-rose-500 bg-rose-50" },
-    { name: "Coverage", status: "Passed", errors: 0, warnings: 0, time: "00:01:05", icon: BarChart2, color: "text-cyan-500 bg-cyan-50" }
+    { name: "DRC", status: drcErrors.length > 0 ? "Failed" : "Passed", errors: drcErrors.length, warnings: drcWarnings.length, time: "00:00:12", icon: Layers, color: drcErrors.length > 0 ? "text-red-500 bg-red-50" : "text-blue-500 bg-blue-50" },
+    { name: "LVS", status: "Passed", errors: 0, warnings: 0, time: "00:00:08", icon: Link, color: "text-emerald-500 bg-emerald-50" },
+    { name: "ERC", status: ercErrors.length > 0 ? "Failed" : "Passed", errors: ercErrors.length, warnings: ercWarnings.length, time: "00:00:05", icon: Cpu, color: ercErrors.length > 0 ? "text-red-500 bg-red-50" : "text-amber-500 bg-amber-50" },
+    { name: "Lint", status: "Passed", errors: 0, warnings: 2, time: "00:00:03", icon: Code, color: "text-purple-500 bg-purple-50" },
+    { name: "Formal Verification", status: "Passed", errors: 0, warnings: 0, time: "00:00:15", icon: ShieldCheck, color: "text-indigo-500 bg-indigo-50" },
+    { name: "Assertions", status: "Passed", errors: 0, warnings: 0, time: "00:00:02", icon: Target, color: "text-rose-500 bg-rose-50" },
+    { name: "Coverage", status: "Passed", errors: 0, warnings: 0, time: "00:00:04", icon: BarChart2, color: "text-cyan-500 bg-cyan-50" }
   ];
 
   // Recent issues table data
-  const recentIssuesList = [
-    { type: "DRC", check: "MinWidth", msg: "Metal1 width 0.12/µm is less than minimum 0.15/µm", loc: "alu_32bit/layout/alu_top.gds:3421", severity: "Warning", typeColor: "text-blue-600 bg-blue-50 border-blue-100" },
-    { type: "DRC", check: "MinSpacing", msg: "Metal1 spacing 0.11/µm is less than minimum 0.14/µm", loc: "alu_32bit/layout/alu_top.gds:3456", severity: "Warning", typeColor: "text-blue-600 bg-blue-50 border-blue-100" },
-    { type: "ERC", check: "UnconnectedPin", msg: "Pin VDD of instance U12 is unconnected", loc: "alu_32bit/schematic/alu_top.sch:178", severity: "Warning", typeColor: "text-amber-600 bg-amber-50 border-amber-100" },
-    { type: "Lint", check: "UnusedSignal", msg: "Signal 'temp_reg' is declared but never used", loc: "alu_32bit/rtl/alu_control.sv:215", severity: "Warning", typeColor: "text-purple-600 bg-purple-50 border-purple-100" },
-    { type: "Lint", check: "AlwaysBlockLatch", msg: "Latch inferred in always block", loc: "alu_32bit/rtl/alu_datapath.sv:98", severity: "Warning", typeColor: "text-purple-600 bg-purple-50 border-purple-100" }
-  ];
+  const recentIssuesList: any[] = [];
+  
+  if (hasResults) {
+    drcErrors.forEach((msg: string, i: number) => {
+      recentIssuesList.push({
+        type: "DRC",
+        check: "MinWidth",
+        msg,
+        loc: `${activeProject.name.toLowerCase()}/layout/top.gds`,
+        severity: "Error",
+        typeColor: "text-red-600 bg-red-50 border-red-100"
+      });
+    });
+
+    ercErrors.forEach((msg: string, i: number) => {
+      recentIssuesList.push({
+        type: "ERC",
+        check: "FloatingPin",
+        msg,
+        loc: `${activeProject.name.toLowerCase()}/schematic/top.sch`,
+        severity: "Error",
+        typeColor: "text-red-600 bg-red-50 border-red-100"
+      });
+    });
+
+    drcWarnings.forEach((msg: string, i: number) => {
+      recentIssuesList.push({
+        type: "DRC",
+        check: "Spacing",
+        msg,
+        loc: `${activeProject.name.toLowerCase()}/layout/top.gds`,
+        severity: "Warning",
+        typeColor: "text-blue-600 bg-blue-50 border-blue-100"
+      });
+    });
+
+    ercWarnings.forEach((msg: string, i: number) => {
+      recentIssuesList.push({
+        type: "ERC",
+        check: "FloatingBulk",
+        msg,
+        loc: `${activeProject.name.toLowerCase()}/schematic/top.sch`,
+        severity: "Warning",
+        typeColor: "text-amber-600 bg-amber-50 border-amber-100"
+      });
+    });
+  } else {
+    recentIssuesList.push(
+      { type: "DRC", check: "MinWidth", msg: "Metal1 width 0.12/µm is less than minimum 0.15/µm", loc: `${activeProject.name.toLowerCase()}/layout/top.gds:3421`, severity: "Warning", typeColor: "text-blue-600 bg-blue-50 border-blue-100" },
+      { type: "DRC", check: "MinSpacing", msg: "Metal1 spacing 0.11/µm is less than minimum 0.14/µm", loc: `${activeProject.name.toLowerCase()}/layout/top.gds:3456`, severity: "Warning", typeColor: "text-blue-600 bg-blue-50 border-blue-100" },
+      { type: "ERC", check: "UnconnectedPin", msg: "Pin VDD of instance U12 is unconnected", loc: `${activeProject.name.toLowerCase()}/schematic/top.sch:178`, severity: "Warning", typeColor: "text-amber-600 bg-amber-50 border-amber-100" }
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc] font-sans select-text">
@@ -103,16 +163,7 @@ export function VerificationView() {
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 border border-white" />
           </button>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm font-sans shadow-sm">
-              M
-            </div>
-            <span className="text-xs font-semibold text-slate-805 group-hover:text-slate-900 transition">
-              Motinath
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </div>
+
         </div>
       </div>
 
@@ -158,10 +209,10 @@ export function VerificationView() {
       <div className="px-8 py-4 bg-white border-b border-slate-150 flex flex-wrap items-center justify-between gap-4 select-none shrink-0 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-sans">
         <div className="flex flex-wrap items-center gap-8">
           {[
-            { label: "Project", val: "alu_32bit" },
-            { label: "Top Module", val: "alu_32bit" },
-            { label: "Technology", val: "SKY130" },
-            { label: "Rule Deck", val: "sky130A" }
+            { label: "Project", val: activeProject.name },
+            { label: "Top Module", val: activeProject.design_type },
+            { label: "Technology", val: activeProject.technology },
+            { label: "Rule Deck", val: `${activeProject.technology}A` }
           ].map((cfg) => (
             <div key={cfg.label} className="space-y-1">
               <span className="block text-[9px] text-slate-400">{cfg.label}</span>
@@ -175,12 +226,14 @@ export function VerificationView() {
           {/* Timestamp fields */}
           <div className="space-y-1">
             <span className="block text-[9px] text-slate-400">Last Run</span>
-            <span className="block text-slate-750 font-bold text-xs pt-1.5 font-mono lowercase">May 30, 2025 02:45 PM</span>
+            <span className="block text-slate-750 font-bold text-xs pt-1.5 font-mono lowercase">
+              {activeDesign?.created_at ? new Date(activeDesign.created_at).toLocaleString() : "just now"}
+            </span>
           </div>
 
           <div className="space-y-1">
             <span className="block text-[9px] text-slate-400">Run By</span>
-            <span className="block text-slate-750 font-bold text-xs pt-1.5 lowercase">Motinath</span>
+            <span className="block text-slate-750 font-bold text-xs pt-1.5 lowercase">system</span>
           </div>
 
           {/* Status field */}

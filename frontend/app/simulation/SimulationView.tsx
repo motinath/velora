@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 export function SimulationView() {
-  const { activeProject } = useAppContext();
+  const { activeProject, activeDesign, vddSlider, optimization } = useAppContext();
 
   // State values
   const [activeTab, setActiveTab] = useState<"run" | "waveform" | "logs" | "coverage" | "perf">("run");
@@ -56,65 +56,135 @@ export function SimulationView() {
     setSettingsOpen(prev => ({ ...prev, [sect]: !prev[sect] }));
   };
 
-  // Dragging states for waveform cursor
+  // Helper function to round values
+  const round = (num: number, decimal: number) => {
+    const factor = Math.pow(10, decimal);
+    return Math.round(num * factor) / factor;
+  };
+
+  // Check if simulation results exist in activeDesign
+  const simResults = activeDesign?.simulation_results_json;
+  const hasSimResults = simResults && simResults.status === "SUCCESS" && simResults.waveforms;
+
+  // Determine x-axis bounds and configurations
+  let xMin = 0;
+  let xMax = 1000;
+  let xUnit = "ns";
+  let xTitle = "Time";
+
+  let waveformsData: any = {};
+
+  if (hasSimResults) {
+    waveformsData = simResults.waveforms;
+    const xArr = waveformsData.x || [];
+    if (xArr.length > 0) {
+      xMin = xArr[0];
+      xMax = xArr[xArr.length - 1];
+    }
+    const designType = activeDesign?.requirements_json?.type;
+    if (designType === "Current Mirror") {
+      xUnit = "V";
+      xTitle = "VDS";
+    } else if (designType === "Differential Pair" || designType === "OTA") {
+      xUnit = "V";
+      xTitle = "Vid";
+    } else if (designType === "Bandgap Reference") {
+      xUnit = "°C";
+      xTitle = "Temp";
+    }
+  } else {
+    // Generate fallback dynamic waveforms based on activeProject design_type
+    const points_count = 100;
+    const time_pts = Array.from({ length: points_count }, (_, i) => round(i * 10, 2));
+    waveformsData.x = time_pts;
+    const vdd = vddSlider || 1.8;
+    
+    if (activeProject?.design_type === "6T SRAM" || activeProject?.design_type === "Memory") {
+      const wl_pts = time_pts.map(t => (t >= 200 && t <= 600) ? vdd : 0.0);
+      const bl_pts = time_pts.map(t => vdd);
+      const blb_pts = time_pts.map(t => t < 250 ? vdd : 0.0);
+      const q_pts = time_pts.map(t => t < 280 ? 0.0 : t <= 550 ? vdd * (1 - Math.exp(-(t-280)/28)) : vdd);
+      const qb_pts = time_pts.map((t, idx) => vdd - q_pts[idx]);
+      
+      waveformsData.y_WL = wl_pts;
+      waveformsData.y_BL = bl_pts;
+      waveformsData.y_BLB = blb_pts;
+      waveformsData.y_Q = q_pts;
+      waveformsData.y_QB = qb_pts;
+    } else if (activeProject?.design_type === "Ring Oscillator") {
+      const osc_pts = time_pts.map(t => {
+        const amp = (vdd / 2) * (1 - Math.exp(-t / 100));
+        return (vdd / 2) + amp * Math.sin(2 * Math.PI * 0.01 * t);
+      });
+      waveformsData.y_OSC_OUT = osc_pts;
+    } else if (activeProject?.design_type === "Current Mirror") {
+      const vds_pts = Array.from({ length: points_count }, (_, i) => round(i * 0.02, 2));
+      waveformsData.x = vds_pts;
+      waveformsData.y_Iref = vds_pts.map(t => 10.0);
+      waveformsData.y_Iout = vds_pts.map(t => t < 0.15 ? 10 * (t/0.15) : 10 * (1 + 0.22*(t-0.15)));
+      xMin = 0;
+      xMax = 1.98;
+      xUnit = "V";
+      xTitle = "VDS";
+    } else {
+      // Default ALU signals
+      const clk_pts = time_pts.map(t => (t % 100 < 50) ? vdd : 0.0);
+      const rst_pts = time_pts.map(t => t < 150 ? 0.0 : vdd);
+      waveformsData.y_CLK = clk_pts;
+      waveformsData.y_RST_N = rst_pts;
+      waveformsData.y_A = time_pts.map(t => t < 300 ? 0 : t < 500 ? vdd : 0.5);
+      waveformsData.y_B = time_pts.map(t => t < 300 ? 0 : vdd);
+      waveformsData.y_OUT = time_pts.map((t, idx) => rst_pts[idx] === 0 ? 0 : waveformsData.y_A[idx] + waveformsData.y_B[idx]);
+    }
+  }
+
+  // Playback timer effect
+  React.useEffect(() => {
+    let interval: any;
+    if (isPlaying) {
+      const step = (xMax - xMin) / 100;
+      interval = setInterval(() => {
+        setCurrentTime((prev) => {
+          const next = prev + step;
+          if (next > xMax) {
+            setIsPlaying(false);
+            return xMax;
+          }
+          return next;
+        });
+      }, 50);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, xMin, xMax]);
+
+  // Adjust default currentTime if it falls out of bounds
+  React.useEffect(() => {
+    if (currentTime < xMin || currentTime > xMax) {
+      setCurrentTime((xMax + xMin) / 2);
+    }
+  }, [xMin, xMax]);
+
+  // Dragging slider change
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentTime(Number(e.target.value));
   };
 
-  // Values based on current slider position
-  const getBusValue = (signalName: string, time: number) => {
-    if (signalName === "a[31:0]") {
-      if (time < 300) return "00000000";
-      if (time < 500) return "0000000A";
-      if (time < 700) return "00000005";
-      if (time < 900) return "FFFFFFFF";
-      return "00000003";
+  // Dynamic value lookup for the signals
+  const getSignalValueAtCursor = (signalKey: string) => {
+    const values = waveformsData[signalKey] || [];
+    const xArr = waveformsData.x || [];
+    if (values.length === 0 || xArr.length === 0) return 0.00;
+    
+    let closestIdx = 0;
+    let minDiff = Infinity;
+    for (let i = 0; i < xArr.length; i++) {
+      const diff = Math.abs(xArr[i] - currentTime);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = i;
+      }
     }
-    if (signalName === "b[31:0]") {
-      if (time < 300) return "00000000";
-      if (time < 500) return "00000005";
-      if (time < 700) return "00000003";
-      if (time < 900) return "00000001";
-      return "00000002";
-    }
-    if (signalName === "alu_ctrl[3:0]") {
-      if (time < 300) return "0";
-      if (time < 500) return "0";
-      if (time < 700) return "1";
-      if (time < 900) return "2";
-      return "4";
-    }
-    if (signalName === "y[31:0]" || signalName === "result[31:0]") {
-      if (time < 300) return "00000000";
-      if (time < 500) return "0000000F";
-      if (time < 700) return "00000002";
-      if (time < 900) return "00000000";
-      return "00000001";
-    }
-    if (signalName === "c_in[32:0]") {
-      if (time < 300) return "00000000A";
-      if (time < 500) return "00000000A";
-      if (time < 700) return "000000005";
-      if (time < 900) return "000000003";
-      return "000000002";
-    }
-    return "00000000";
-  };
-
-  const getDigitalValue = (signalName: string, time: number) => {
-    if (signalName === "rst_n") {
-      return time < 150 ? 0 : 1;
-    }
-    if (signalName === "zero") {
-      return (time >= 600 && time < 800) ? 1 : 0;
-    }
-    if (signalName === "carry" || signalName === "c_out") {
-      return (time >= 450 && time < 750) ? 1 : 0;
-    }
-    if (signalName === "overflow") {
-      return (time >= 700 && time < 850) ? 1 : 0;
-    }
-    return 0;
+    return values[closestIdx];
   };
 
   if (!activeProject) {
@@ -126,7 +196,69 @@ export function SimulationView() {
   }
 
   // Calculate coordinates for waveforms SVG grid mapping
-  const cursorX = (currentTime / 1000) * 450 + 60; // 60px padding on left, 450px wave grid width
+  const cursorX = xMax !== xMin ? 60 + ((currentTime - xMin) / (xMax - xMin)) * 450 : 60;
+
+  // Dynamic waves rows construction
+  const signalKeys = Object.keys(waveformsData).filter(
+    (k) => k !== "x" && (signalSearch === "" || k.toLowerCase().includes(signalSearch.toLowerCase()))
+  );
+  
+  const waveRows = signalKeys.map((key, idx) => {
+    const name = key.replace(/^y_/, "");
+    const values = waveformsData[key] || [];
+    const maxVal = Math.max(...values, 1.8);
+    const minVal = Math.min(...values, 0);
+    
+    // Determine type: digital vs analog
+    const isDigital = values.every((v: number) => Math.abs(v - minVal) < 0.05 || Math.abs(v - maxVal) < 0.05);
+    const type = isDigital ? "digital" : "analog";
+    const currentVal = getSignalValueAtCursor(key);
+    
+    let valStr = "";
+    if (type === "digital") {
+      const threshold = minVal + (maxVal - minVal) * 0.5;
+      valStr = currentVal >= threshold ? "1" : "0";
+    } else {
+      if (name.toLowerCase().includes("i")) {
+        valStr = `${Number(currentVal).toFixed(3)} µA`;
+      } else {
+        valStr = `${Number(currentVal).toFixed(3)} V`;
+      }
+    }
+
+    // Build SVG path
+    let path = "";
+    if (values.length > 0) {
+      const xArr = waveformsData.x || [];
+      const x_range = xMax - xMin || 1.0;
+      const pts = values.map((val: number, i: number) => {
+        const x_val = xArr[i];
+        const px = 60 + ((x_val - xMin) / x_range) * 450;
+        
+        let py = 18;
+        if (type === "digital") {
+          const threshold = minVal + (maxVal - minVal) * 0.5;
+          py = val >= threshold ? 5 : 18;
+        } else {
+          const range = maxVal - minVal || 1.0;
+          py = 18 - ((val - minVal) / range) * 13;
+        }
+        return `${px.toFixed(1)},${py.toFixed(1)}`;
+      });
+      path = "M " + pts.join(" L ");
+    }
+
+    const colors = ["#eab308", "#10b981", "#3b82f6", "#a855f7", "#ec4899", "#ef4444"];
+    const color = colors[idx % colors.length];
+
+    return {
+      name,
+      type,
+      color,
+      path,
+      val: valStr
+    };
+  });
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc] font-sans select-text">
@@ -165,16 +297,7 @@ export function SimulationView() {
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 border border-white" />
           </button>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm font-sans shadow-sm">
-              M
-            </div>
-            <span className="text-xs font-semibold text-slate-805 group-hover:text-slate-900 transition">
-              Motinath
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </div>
+
         </div>
       </div>
 
@@ -431,12 +554,12 @@ export function SimulationView() {
               
               {/* Timeline Header Row (x-axis) */}
               <div className="h-8 border-b border-zinc-800 flex items-end pb-1.5 relative select-none">
-                <span className="absolute left-[60px]">0 ns</span>
-                <span className="absolute left-[150px]">200 ns</span>
-                <span className="absolute left-[240px]">400 ns</span>
-                <span className="absolute left-[330px]">600 ns</span>
-                <span className="absolute left-[420px]">800 ns</span>
-                <span className="absolute left-[510px]">1,000 ns</span>
+                <span className="absolute left-[60px]">{xMin.toFixed(1)} {xUnit}</span>
+                <span className="absolute left-[150px]">{(xMin + (xMax - xMin) * 0.2).toFixed(1)} {xUnit}</span>
+                <span className="absolute left-[240px]">{(xMin + (xMax - xMin) * 0.4).toFixed(1)} {xUnit}</span>
+                <span className="absolute left-[330px]">{(xMin + (xMax - xMin) * 0.6).toFixed(1)} {xUnit}</span>
+                <span className="absolute left-[420px]">{(xMin + (xMax - xMin) * 0.8).toFixed(1)} {xUnit}</span>
+                <span className="absolute left-[510px]">{xMax.toFixed(1)} {xUnit}</span>
 
                 {/* Draggable Scrubber Badge */}
                 <div 
@@ -444,7 +567,7 @@ export function SimulationView() {
                   style={{ left: `${cursorX}px`, transform: "translateX(-50%)" }}
                 >
                   <span className="bg-blue-600 text-white text-[8.5px] px-1.5 py-0.5 rounded shadow-md font-bold mb-0.5">
-                    {currentTime.toFixed(2)} ns
+                    {currentTime.toFixed(2)} {xUnit}
                   </span>
                 </div>
               </div>
@@ -458,97 +581,7 @@ export function SimulationView() {
                   style={{ left: `${cursorX}px` }}
                 />
 
-                {[
-                  // clk
-                  {
-                    name: "clk",
-                    type: "clock",
-                    color: "#eab308",
-                    path: "M 60,18 L 82.5,18 L 82.5,5 L 105,5 L 105,18 L 127.5,18 L 127.5,5 L 150,5 L 150,18 L 172.5,18 L 172.5,5 L 195,5 L 195,18 L 217.5,18 L 217.5,5 L 240,5 L 240,18 L 262.5,18 L 262.5,5 L 285,5 L 285,18 L 307.5,18 L 307.5,5 L 330,5 L 330,18 L 352.5,18 L 352.5,5 L 375,5 L 375,18 L 397.5,18 L 397.5,5 L 420,5 L 420,18 L 442.5,18 L 442.5,5 L 465,5 L 465,18 L 487.5,18 L 487.5,5 L 510,5 L 510,18"
-                  },
-                  // rst_n
-                  {
-                    name: "rst_n",
-                    type: "digital",
-                    color: "#10b981",
-                    val: getDigitalValue("rst_n", currentTime),
-                    path: "M 60,18 L 127.5,18 L 127.5,5 L 510,5"
-                  },
-                  // a[31:0]
-                  {
-                    name: "a[31:0]",
-                    type: "bus",
-                    color: "#3b82f6",
-                    val: getBusValue("a[31:0]", currentTime)
-                  },
-                  // b[31:0]
-                  {
-                    name: "b[31:0]",
-                    type: "bus",
-                    color: "#3b82f6",
-                    val: getBusValue("b[31:0]", currentTime)
-                  },
-                  // alu_ctrl[3:0]
-                  {
-                    name: "alu_ctrl[3:0]",
-                    type: "bus",
-                    color: "#a855f7",
-                    val: getBusValue("alu_ctrl[3:0]", currentTime)
-                  },
-                  // y[31:0]
-                  {
-                    name: "y[31:0]",
-                    type: "bus",
-                    color: "#10b981",
-                    val: getBusValue("y[31:0]", currentTime)
-                  },
-                  // zero
-                  {
-                    name: "zero",
-                    type: "digital",
-                    color: "#eab308",
-                    val: getDigitalValue("zero", currentTime),
-                    path: "M 60,18 L 330,18 L 330,5 L 420,5 L 420,18 L 510,18"
-                  },
-                  // carry
-                  {
-                    name: "carry",
-                    type: "digital",
-                    color: "#ef4444",
-                    val: getDigitalValue("carry", currentTime),
-                    path: "M 60,18 L 262.5,18 L 262.5,5 L 397.5,5 L 397.5,18 L 510,18"
-                  },
-                  // overflow
-                  {
-                    name: "overflow",
-                    type: "digital",
-                    color: "#a855f7",
-                    val: getDigitalValue("overflow", currentTime),
-                    path: "M 60,18 L 375,18 L 375,5 L 442.5,5 L 442.5,18 L 510,18"
-                  },
-                  // result[31:0]
-                  {
-                    name: "result[31:0]",
-                    type: "bus",
-                    color: "#3b82f6",
-                    val: getBusValue("result[31:0]", currentTime)
-                  },
-                  // c_out
-                  {
-                    name: "c_out",
-                    type: "digital",
-                    color: "#a855f7",
-                    val: getDigitalValue("c_out", currentTime),
-                    path: "M 60,18 L 262.5,18 L 262.5,5 L 397.5,5 L 397.5,18 L 510,18"
-                  },
-                  // c_in[32:0]
-                  {
-                    name: "c_in[32:0]",
-                    type: "bus",
-                    color: "#3b82f6",
-                    val: getBusValue("c_in[32:0]", currentTime)
-                  }
-                ].map((row, idx) => (
+                {waveRows.map((row, idx) => (
                   <div key={idx} className="h-8 border-b border-zinc-900/60 flex items-center relative select-none">
                     
                     {/* Signal label tag on far left */}
@@ -558,35 +591,7 @@ export function SimulationView() {
 
                     {/* SVG waveform canvas */}
                     <svg className="absolute left-0 right-0 w-full h-full pointer-events-none">
-                      {row.type === "clock" && (
-                        <path d={row.path} stroke={row.color} strokeWidth="1.2" fill="none" />
-                      )}
-                      {row.type === "digital" && (
-                        <path d={row.path} stroke={row.color} strokeWidth="1.2" fill="none" />
-                      )}
-                      
-                      {/* Hex Bus signals paths drawing */}
-                      {row.type === "bus" && (
-                        <g>
-                          {/* Segment 1 */}
-                          <polygon points="60,18 64,5 191,5 195,18 191,30 64,30" stroke={row.color} strokeWidth="1" fill="#111" fillOpacity="0.8" />
-                          {/* Segment 2 */}
-                          <polygon points="195,18 199,5 281,5 285,18 281,30 199,30" stroke={row.color} strokeWidth="1" fill="#111" fillOpacity="0.8" />
-                          {/* Segment 3 */}
-                          <polygon points="285,18 289,5 371,5 375,18 371,30 289,30" stroke={row.color} strokeWidth="1" fill="#111" fillOpacity="0.8" />
-                          {/* Segment 4 */}
-                          <polygon points="375,18 379,5 461,5 465,18 461,30 379,30" stroke={row.color} strokeWidth="1" fill="#111" fillOpacity="0.8" />
-                          {/* Segment 5 */}
-                          <polygon points="465,18 469,5 506,5 510,18 506,30 469,30" stroke={row.color} strokeWidth="1" fill="#111" fillOpacity="0.8" />
-
-                          {/* Hex values labels inside blocks */}
-                          <text x="110" y="21" fill="#fff" className="font-mono text-[9px] font-bold fill-slate-350">{getBusValue(row.name, 100)}</text>
-                          <text x="220" y="21" fill="#fff" className="font-mono text-[9px] font-bold fill-slate-350">{getBusValue(row.name, 350)}</text>
-                          <text x="315" y="21" fill="#fff" className="font-mono text-[9px] font-bold fill-slate-350">{getBusValue(row.name, 600)}</text>
-                          <text x="405" y="21" fill="#fff" className="font-mono text-[9px] font-bold fill-slate-350">{getBusValue(row.name, 800)}</text>
-                          <text x="480" y="21" fill="#fff" className="font-mono text-[9px] font-bold fill-slate-350">{getBusValue(row.name, 950)}</text>
-                        </g>
-                      )}
+                      <path d={row.path} stroke={row.color} strokeWidth="1.2" fill="none" />
                     </svg>
 
                     {/* Displays value badge at current cursor time */}
@@ -595,7 +600,7 @@ export function SimulationView() {
                       style={{ left: `${cursorX + 6}px` }}
                     >
                       <span className="bg-zinc-800/90 text-white font-bold px-1.5 py-0.5 rounded border border-zinc-700 shadow-sm leading-none">
-                        {row.type === "bus" ? row.val : row.val}
+                        {row.val}
                       </span>
                     </div>
                   </div>
@@ -622,22 +627,23 @@ export function SimulationView() {
               <input
                 type="number"
                 value={currentTime.toFixed(2)}
-                onChange={(e) => setCurrentTime(Math.min(1000, Math.max(0, Number(e.target.value))))}
+                onChange={(e) => setCurrentTime(Math.min(xMax, Math.max(xMin, Number(e.target.value))))}
                 className="w-20 bg-white border border-slate-200 text-xs font-mono font-bold text-slate-700 text-center rounded px-1.5 py-1 outline-none"
               />
-              <span className="text-xs font-bold text-slate-400 font-mono">ns</span>
+              <span className="text-xs font-bold text-slate-400 font-mono">{xUnit}</span>
               <button className="p-1 hover:bg-slate-200 text-slate-400 rounded"><RotateCcw className="w-3.5 h-3.5" /></button>
               
               <input
                 type="range"
-                min="0"
-                max="1000"
+                min={xMin}
+                max={xMax}
+                step={(xMax - xMin) / 200}
                 value={currentTime}
                 onChange={handleSliderChange}
                 className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 outline-none"
               />
               
-              <span className="text-xs font-bold text-slate-405 font-mono">1,000 ns</span>
+              <span className="text-xs font-bold text-slate-405 font-mono">{xMax.toFixed(1)} {xUnit}</span>
               <button className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-655 shadow-sm hover:bg-slate-50 transition">Fit</button>
             </div>
           </div>

@@ -1,9 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Search, Cpu, FileText, ChevronRight } from "lucide-react";
+import { useAppContext } from "../../app/providers";
 
 export function KnowledgeView() {
+  const { handleSelect, setPrompt } = useAppContext();
+  const [question, setQuestion] = useState("");
   return (
     <div className="flex-1 flex flex-col overflow-y-auto bg-slate-50/30 font-sans animate-in fade-in duration-200 select-text">
       <div className="px-8 pt-6 pb-4 flex justify-between items-center bg-white border-b border-border shrink-0">
@@ -128,19 +131,38 @@ export function KnowledgeView() {
               <h3 className="text-xs font-bold text-slate-805 uppercase tracking-wider">Ask VELORA AI</h3>
               <p className="text-[10px] text-slate-500">Get instant answers from your AI assistant about EDA, circuits, and semiconductor design.</p>
             </div>
-            <div className="w-full bg-slate-50 border border-slate-150 rounded-xl p-3 shadow-inner space-y-2">
+            <div className="w-full bg-slate-50 border border-slate-155 rounded-xl p-3 shadow-inner space-y-2">
               <textarea 
                 placeholder="Ask anything about chip design... e.g. What is setup time?" 
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
                 className="w-full bg-transparent border-0 outline-none text-xs text-slate-700 resize-none h-16 font-sans leading-relaxed"
               />
               <div className="flex justify-end pt-1">
-                <button onClick={() => alert("AI Agent thinking...")} className="bg-primary hover:bg-primary/95 text-white p-1.5 rounded-lg transition text-xs">➔</button>
+                <button 
+                  onClick={() => {
+                    if (question.trim()) {
+                      setPrompt(question);
+                      handleSelect("ai-design");
+                    }
+                  }}
+                  className="bg-primary hover:bg-primary/95 text-white p-1.5 rounded-lg transition text-xs"
+                >
+                  ➔
+                </button>
               </div>
             </div>
             <div className="space-y-2 text-[10px] text-slate-655 font-sans font-medium">
               <p className="text-slate-455 font-bold uppercase text-[8px] tracking-wide">Try these examples</p>
               {["Explain hold time in STA", "How does a 6T SRAM cell work?", "What are design rules in SKY130?"].map((ex) => (
-                <div key={ex} className="p-2 bg-slate-50 border border-slate-100 hover:border-primary/20 rounded-lg cursor-pointer flex justify-between items-center transition">
+                <div 
+                  key={ex} 
+                  onClick={() => {
+                    setPrompt(ex);
+                    handleSelect("ai-design");
+                  }}
+                  className="p-2 bg-slate-50 border border-slate-100 hover:border-primary/20 rounded-lg cursor-pointer flex justify-between items-center transition"
+                >
                   <span>{ex}</span>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </div>

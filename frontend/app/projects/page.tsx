@@ -1,6 +1,6 @@
 "use client";
 
-import { ProjectsView } from "../../components/views/ProjectsView";
+import { ProjectsView } from "./ProjectsView";
 
 export default function ProjectsPage() {
   return <ProjectsView />;

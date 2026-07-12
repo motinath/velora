@@ -1,6 +1,6 @@
 "use client";
 
-import { SimulationView } from "../../components/views/SimulationView";
+import { SimulationView } from "./SimulationView";
 
 export default function SimulationPage() {
   return <SimulationView />;

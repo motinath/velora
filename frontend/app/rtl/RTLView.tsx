@@ -28,12 +28,11 @@ import {
 export function RTLView() {
   const {
     activeProject,
-    handleSelect
+    activeDesign
   } = useAppContext();
 
   // Tab & UI Panel States
   const [activeTab, setActiveTab] = useState<"editor" | "explorer" | "build" | "terminal" | "git">("editor");
-  const [activeEditorTab, setActiveEditorTab] = useState<string>("alu_32bit.sv");
   const [activeLogTab, setActiveLogTab] = useState<"problems" | "output" | "terminal" | "lint">("problems");
   const [fileSearch, setFileSearch] = useState("");
   const [isFolderOpen, setIsFolderOpen] = useState({
@@ -49,7 +48,32 @@ export function RTLView() {
     setIsFolderOpen(prev => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const codeString = `// 32-bit ALU
+  // Determine active project attributes
+  const prjName = activeProject?.name || "";
+  const prjType = activeProject?.design_type || "";
+  const isSram = prjType.toLowerCase().includes("sram") || prjName.toLowerCase().includes("sram");
+  const isOscillator = prjType.toLowerCase().includes("oscillator") || prjName.toLowerCase().includes("oscillator") || prjType.toLowerCase().includes("ring");
+  const isMirror = prjType.toLowerCase().includes("mirror") || prjName.toLowerCase().includes("mirror") || prjType.toLowerCase().includes("current");
+
+  let defaultFileName = "alu_32bit.sv";
+  let defaultModuleName = "alu_32bit";
+  let defaultPorts = [
+    { name: "clk", type: "logic" },
+    { name: "rst_n", type: "logic" },
+    { name: "a", type: "logic [31:0]" },
+    { name: "b", type: "logic [31:0]" },
+    { name: "alu_ctrl", type: "logic [3:0]" },
+    { name: "y", type: "logic [31:0]" },
+    { name: "zero", type: "logic" },
+    { name: "carry", type: "logic" },
+    { name: "overflow", type: "logic" }
+  ];
+  let defaultInternal = [
+    { name: "result", type: "logic [31:0]" },
+    { name: "c_out", type: "logic" }
+  ];
+
+  let fallbackCode = `// 32-bit ALU
 // Author: Motinath
 
 module alu_32bit (
@@ -86,6 +110,154 @@ always_comb begin
         default:     result = 32'h0;
     endcase
 end`;
+
+  if (isSram) {
+    defaultFileName = "sram_bitcell.sv";
+    defaultModuleName = "sram_bitcell";
+    defaultPorts = [
+      { name: "wl", type: "input logic" },
+      { name: "bl", type: "inout logic" },
+      { name: "blb", type: "inout logic" },
+      { name: "vdd", type: "input logic" },
+      { name: "gnd", type: "input logic" }
+    ];
+    defaultInternal = [
+      { name: "q", type: "logic" },
+      { name: "qb", type: "logic" }
+    ];
+    fallbackCode = `// 6T SRAM Bitcell logic wrapper
+// Author: Motinath
+
+module sram_bitcell (
+    input  logic wl,
+    inout  logic bl,
+    inout  logic blb,
+    input  logic vdd,
+    input  logic gnd
+);
+    logic q;
+    logic qb;
+
+    // Cross-coupled CMOS inverters behavior
+    assign q = (wl && bl) ? 1'b1 : ((wl && blb) ? 1'b0 : q);
+    assign qb = ~q;
+
+    assign bl = (wl && !blb) ? q : 1'bz;
+    assign blb = (wl && !bl) ? qb : 1'bz;
+
+endmodule`;
+  } else if (isOscillator) {
+    defaultFileName = "ring_oscillator.sv";
+    defaultModuleName = "ring_oscillator";
+    defaultPorts = [
+      { name: "en", type: "input logic" },
+      { name: "out", type: "output logic" },
+      { name: "vdd", type: "input logic" },
+      { name: "gnd", type: "input logic" }
+    ];
+    defaultInternal = [
+      { name: "n1", type: "logic" },
+      { name: "n2", type: "logic" },
+      { name: "n3", type: "logic" }
+    ];
+    fallbackCode = `// Ring Oscillator behavior wrapper
+// Author: Motinath
+
+module ring_oscillator (
+    input  logic en,
+    output logic out,
+    input  logic vdd,
+    input  logic gnd
+);
+    logic n1, n2, n3;
+
+    // Delay line modeling logic loops
+    assign #2 n1 = en ? ~n3 : 1'b0;
+    assign #2 n2 = ~n1;
+    assign #2 n3 = ~n2;
+    assign out = n3;
+
+endmodule`;
+  } else if (isMirror) {
+    defaultFileName = "current_mirror.sv";
+    defaultModuleName = "current_mirror";
+    defaultPorts = [
+      { name: "iref", type: "input logic" },
+      { name: "iout", type: "output logic" },
+      { name: "vdd", type: "input logic" },
+      { name: "gnd", type: "input logic" }
+    ];
+    defaultInternal = [
+      { name: "vgate", type: "logic" }
+    ];
+    fallbackCode = `// Current Mirror amplifier behavior wrapper
+// Author: Motinath
+
+module current_mirror (
+    input  logic iref,
+    output logic iout,
+    input  logic vdd,
+    input  logic gnd
+);
+    logic vgate;
+
+    // Direct proportional current replica
+    assign vgate = iref * 0.15;
+    assign iout = vgate / 0.15;
+
+endmodule`;
+  }
+
+  const [activeEditorTab, setActiveEditorTab] = useState<string>(defaultFileName);
+
+  React.useEffect(() => {
+    setActiveEditorTab(defaultFileName);
+  }, [defaultFileName]);
+
+  const codeString = activeDesign?.netlist_content || fallbackCode;
+
+  const baseName = prjName.toLowerCase().replace(/\s+/g, "_") || "design";
+  let fileList = [
+    { name: `${baseName}.sv` },
+    { name: `${baseName}_control.sv` },
+    { name: `${baseName}_pkg.sv` },
+    { name: `${baseName}_types.sv` }
+  ];
+  if (isSram) {
+    fileList = [
+      { name: "sram_bitcell.sv" },
+      { name: "sram_control.sv" },
+      { name: "sram_pkg.sv" },
+      { name: "sram_types.sv" }
+    ];
+  } else if (isOscillator) {
+    fileList = [
+      { name: "ring_oscillator.sv" },
+      { name: "delay_stage.sv" },
+      { name: "osc_pkg.sv" },
+      { name: "osc_types.sv" }
+    ];
+  } else if (isMirror) {
+    fileList = [
+      { name: "current_mirror.sv" },
+      { name: "bias_gen.sv" },
+      { name: "mirror_pkg.sv" },
+      { name: "mirror_types.sv" }
+    ];
+  }
+
+  let fileContent = codeString;
+  if (activeEditorTab !== defaultFileName) {
+    fileContent = `// File: ${activeEditorTab}
+// Generated dynamically for ${activeProject.name}
+// Technology Node: ${activeProject.technology}
+
+package ${activeEditorTab.replace(".sv", "")}_pkg;
+  // Dynamic parameters
+  parameter WIDTH = 32;
+endpackage
+`;
+  }
 
   if (!activeProject) {
     return (
@@ -132,16 +304,7 @@ end`;
             <HelpCircle className="w-5 h-5" />
           </button>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm font-sans shadow-sm">
-              M
-            </div>
-            <span className="text-xs font-semibold text-slate-805 group-hover:text-slate-900 transition">
-              Motinath
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </div>
+
         </div>
       </div>
 
@@ -229,7 +392,7 @@ end`;
               >
                 <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition ${isFolderOpen.project ? "" : "-rotate-90"}`} />
                 <Folder className="w-4 h-4 text-blue-500 fill-blue-50" />
-                <span className="text-blue-600 font-bold">alu_32bit_project</span>
+                <span className="text-blue-600 font-bold">{baseName}_project</span>
               </div>
 
               {isFolderOpen.project && (
@@ -248,12 +411,7 @@ end`;
 
                     {isFolderOpen.rtl && (
                       <div className="pl-5 space-y-1 mt-1 text-[11px] font-medium text-slate-550">
-                        {[
-                          { name: "alu_32bit.sv" },
-                          { name: "alu_control.sv" },
-                          { name: "alu_pkg.sv" },
-                          { name: "alu_types.sv" }
-                        ].map((file) => {
+                        {fileList.map((file) => {
                           const isActive = activeEditorTab === file.name;
                           return (
                             <div
@@ -338,25 +496,29 @@ end`;
           {/* Tab row header */}
           <div className="bg-slate-50/50 border-b border-slate-150 px-4 py-2 flex items-center justify-between shrink-0 select-none text-[11px] font-sans font-bold text-slate-500">
             <div className="flex items-center gap-1">
-              {["alu_32bit.sv", "alu_control.sv"].map((t) => (
-                <div
-                  key={t}
-                  onClick={() => setActiveEditorTab(t)}
-                  className={`px-3 py-1.5 rounded-t-lg border-t border-x cursor-pointer flex items-center gap-2 transition ${
-                    activeEditorTab === t
-                      ? "bg-white border-slate-200 text-blue-600"
-                      : "bg-transparent border-transparent hover:text-slate-800"
-                  }`}
-                >
-                  <FileCode className="w-3.5 h-3.5 text-slate-450" />
-                  <span>{t}</span>
-                  <span className="text-slate-350 hover:text-slate-655 text-[8px] pl-1 font-sans">✕</span>
-                </div>
-              ))}
+              {fileList.map((file) => {
+                const t = file.name;
+                const isActive = activeEditorTab === t;
+                return (
+                  <div
+                    key={t}
+                    onClick={() => setActiveEditorTab(t)}
+                    className={`px-3 py-1.5 rounded-t-lg border-t border-x cursor-pointer flex items-center gap-2 transition ${
+                      isActive
+                        ? "bg-white border-slate-200 text-blue-600 font-bold"
+                        : "bg-transparent border-transparent hover:text-slate-800"
+                    }`}
+                  >
+                    <FileCode className="w-3.5 h-3.5 text-slate-450" />
+                    <span>{t}</span>
+                    <span className="text-slate-350 hover:text-slate-655 text-[8px] pl-1 font-sans">✕</span>
+                  </div>
+                );
+              })}
               <button className="p-1 hover:bg-slate-200 rounded text-slate-400 ml-1">+</button>
             </div>
 
-            <div className="flex items-center gap-3 text-slate-450">
+            <div className="flex items-center gap-3 text-slate-455">
               <button className="hover:text-slate-700"><Columns className="w-3.5 h-3.5" /></button>
               <button className="hover:text-slate-700"><Maximize2 className="w-3.5 h-3.5" /></button>
               <button className="hover:text-slate-700"><MoreVertical className="w-3.5 h-3.5" /></button>
@@ -368,13 +530,13 @@ end`;
             <div className="flex gap-4 font-mono text-[10.5px] leading-relaxed text-slate-700 select-text w-full">
               {/* Line numbers column */}
               <div className="text-right text-slate-300 select-none pr-1 border-r border-slate-100 font-sans font-semibold shrink-0">
-                {Array.from({ length: 30 }).map((_, i) => (
+                {Array.from({ length: fileContent.split("\n").length }).map((_, i) => (
                   <div key={i} className="h-5">{i + 1}</div>
                 ))}
               </div>
               {/* Code Editor block */}
               <pre className="flex-1 select-text overflow-x-auto whitespace-pre font-mono text-slate-800">
-                {codeString}
+                {fileContent}
               </pre>
             </div>
           </div>
@@ -462,24 +624,14 @@ end`;
                 <span className="text-[9px] uppercase font-bold text-slate-400 block font-sans tracking-wide">Modules</span>
                 <div className="pl-1.5 flex items-center gap-1.5 text-slate-800 font-bold">
                   <span className="text-blue-500">◆</span>
-                  <span>alu_32bit</span>
+                  <span>{defaultModuleName}</span>
                 </div>
               </div>
 
               <div className="space-y-2.5">
                 <span className="text-[9px] uppercase font-bold text-slate-400 block font-sans tracking-wide">Ports</span>
                 <div className="pl-1.5 space-y-2 text-[11px] font-bold text-slate-700 font-sans">
-                  {[
-                    { name: "clk", type: "logic" },
-                    { name: "rst_n", type: "logic" },
-                    { name: "a", type: "logic [31:0]" },
-                    { name: "b", type: "logic [31:0]" },
-                    { name: "alu_ctrl", type: "logic [3:0]" },
-                    { name: "y", type: "logic [31:0]" },
-                    { name: "zero", type: "logic" },
-                    { name: "carry", type: "logic" },
-                    { name: "overflow", type: "logic" }
-                  ].map(port => (
+                  {defaultPorts.map(port => (
                     <div key={port.name} className="flex justify-between items-center">
                       <span className="text-slate-655 font-bold flex items-center gap-1">
                         <span className="text-slate-400">▪</span>
@@ -494,10 +646,7 @@ end`;
               <div className="space-y-2.5 border-t border-slate-100 pt-3">
                 <span className="text-[9px] uppercase font-bold text-slate-400 block font-sans tracking-wide">Internal Signals</span>
                 <div className="pl-1.5 space-y-2 text-[11px] font-bold text-slate-700 font-sans">
-                  {[
-                    { name: "result", type: "logic [31:0]" },
-                    { name: "c_out", type: "logic" }
-                  ].map(sig => (
+                  {defaultInternal.map(sig => (
                     <div key={sig.name} className="flex justify-between items-center">
                       <span className="text-slate-655 font-bold flex items-center gap-1">
                         <span className="text-slate-400">▪</span>
@@ -517,7 +666,7 @@ end`;
             <div className="space-y-2 text-[10.5px] font-sans font-semibold text-slate-500">
               <div className="flex justify-between">
                 <span>File Name</span>
-                <span className="text-slate-805 font-bold font-mono">alu_32bit.sv</span>
+                <span className="text-slate-805 font-bold font-mono">{defaultFileName}</span>
               </div>
               <div className="flex justify-between">
                 <span>File Type</span>

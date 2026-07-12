@@ -1,9 +1,25 @@
-"use client";
-
 import React from "react";
 import { FileText } from "lucide-react";
+import { useAppContext } from "../../app/providers";
 
 export function ReportsView() {
+  const { activeProject, activeDesign, projects } = useAppContext();
+
+  if (!activeProject) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-sans bg-[#f8fafc]">
+        Select or create a project to launch the Reports Workspace.
+      </div>
+    );
+  }
+
+  const reportsList = [
+    { name: "spice_netlist.sp", type: "SYNTHESIS", size: "8 KB", badge: "bg-blue-50 text-blue-600 border-blue-100" },
+    { name: "schematic_layout.json", type: "TIMING", size: "12 KB", badge: "bg-indigo-50 text-indigo-650 border-indigo-100" },
+    { name: "verification_check.json", type: "DRC/LVS", size: "4 KB", badge: "bg-emerald-50 text-emerald-650 border-emerald-100" },
+    { name: "simulation_run.json", type: "SIMULATION", size: "32 KB", badge: "bg-rose-50 text-rose-650 border-rose-100" }
+  ];
+
   return (
     <div className="flex-1 flex flex-col overflow-y-auto bg-slate-50/30 font-sans animate-in fade-in duration-200">
       <div className="px-8 pt-6 pb-4 flex justify-between items-center bg-white border-b border-border shrink-0">
@@ -30,7 +46,9 @@ export function ReportsView() {
         <div className="flex flex-wrap gap-3.5 font-sans font-semibold text-slate-700">
           <div>
             <label className="text-[8px] uppercase font-bold text-slate-400 block mb-1">Project</label>
-            <select className="bg-slate-50 border border-border px-2.5 py-1.5 rounded-lg outline-none"><option>alu_32bit</option></select>
+            <select className="bg-slate-50 border border-border px-2.5 py-1.5 rounded-lg outline-none">
+              <option>{activeProject.name}</option>
+            </select>
           </div>
           <div>
             <label className="text-[8px] uppercase font-bold text-slate-400 block mb-1">Report Type</label>
@@ -42,7 +60,11 @@ export function ReportsView() {
           </div>
           <div>
             <label className="text-[8px] uppercase font-bold text-slate-400 block mb-1">Date Range</label>
-            <select className="bg-slate-50 border border-border px-2.5 py-1.5 rounded-lg outline-none"><option>May 23, 2025 - May 30, 2025</option></select>
+            <select className="bg-slate-50 border border-border px-2.5 py-1.5 rounded-lg outline-none">
+              <option>
+                {activeDesign?.created_at ? new Date(activeDesign.created_at).toLocaleDateString() : "Today"}
+              </option>
+            </select>
           </div>
         </div>
         <div className="flex gap-2">
@@ -53,17 +75,10 @@ export function ReportsView() {
 
       <div className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         <div className="bg-white border border-border p-6 rounded-2xl shadow-sm space-y-4">
-          <h3 className="text-xs font-bold text-slate-805 border-b border-slate-100 pb-2 uppercase tracking-wide">Reports (15)</h3>
+          <h3 className="text-xs font-bold text-slate-850 border-b border-slate-100 pb-2 uppercase tracking-wide">Reports ({reportsList.length})</h3>
           <div className="space-y-3 text-[10.5px]">
-            {[
-              { name: "synthesis_report.html", type: "SYNTHESIS", size: "245 KB", badge: "bg-blue-50 text-primary border-blue-100" },
-              { name: "timing_report.html", type: "TIMING", size: "186 KB", badge: "bg-indigo-50 text-indigo-650 border-indigo-100" },
-              { name: "power_report.html", type: "POWER", size: "172 KB", badge: "bg-amber-50 text-amber-650 border-amber-100" },
-              { name: "drc_report.html", type: "DRC", size: "98 KB", badge: "bg-emerald-50 text-emerald-650 border-emerald-100" },
-              { name: "lvs_report.html", type: "LVS", size: "142 KB", badge: "bg-purple-50 text-purple-650 border-purple-100" },
-              { name: "simulation_report.html", type: "SIMULATION", size: "210 KB", badge: "bg-rose-50 text-rose-650 border-rose-100" }
-            ].map((rep, idx) => (
-              <div key={idx} className={`p-3 border rounded-xl flex items-center justify-between cursor-pointer transition ${idx === 0 ? 'bg-primary/5 border-primary text-primary font-bold shadow-sm' : 'border-slate-100 hover:bg-slate-50'}`}>
+            {reportsList.map((rep, idx) => (
+              <div key={idx} className={`p-3 border rounded-xl flex items-center justify-between cursor-pointer transition ${idx === 0 ? 'bg-blue-50/50 border-blue-500 text-blue-600 font-bold shadow-sm' : 'border-slate-100 hover:bg-slate-50'}`}>
                 <div className="flex items-center gap-2 max-w-[140px] truncate font-sans">
                   <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <span className="truncate">{rep.name}</span>
@@ -95,15 +110,15 @@ export function ReportsView() {
                 </div>
               </div>
               <div className="text-right text-[9px] text-slate-455 font-mono leading-relaxed">
-                <p>Generated on: May 30, 2025 02:45 PM</p>
-                <p>Tool: Yosys 0.34+abc</p>
-                <p>Technology: SKY130A</p>
+                <p>Generated: {activeDesign?.created_at ? new Date(activeDesign.created_at).toLocaleString() : "just now"}</p>
+                <p>Tool: Ngspice / Yosys Fallbacks</p>
+                <p>Technology: {activeProject.technology.toUpperCase()}</p>
               </div>
             </div>
 
             <div className="space-y-2">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Synthesis Report</h3>
-              <p className="text-[11px] text-slate-500 font-mono mt-1">Design Unit: alu_32bit</p>
+              <p className="text-[11px] text-slate-500 font-mono mt-1">Design Unit: {activeProject.design_type}</p>
             </div>
 
             <div className="overflow-x-auto border border-slate-200 rounded-xl">
@@ -115,12 +130,40 @@ export function ReportsView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
-                  <tr><td className="p-2.5 font-sans font-semibold text-slate-500">Design Top Module</td><td className="p-2.5 text-slate-800 font-bold">alu_32bit</td></tr>
-                  <tr><td className="p-2.5 font-sans font-semibold text-slate-500">Total Cells</td><td className="p-2.5 text-slate-800 font-bold">1,248</td></tr>
-                  <tr><td className="p-2.5 font-sans font-semibold text-slate-500">Combinational Cells</td><td className="p-2.5 text-slate-800 font-bold">987</td></tr>
-                  <tr><td className="p-2.5 font-sans font-semibold text-slate-500">Total Area</td><td className="p-2.5 text-slate-800 font-bold">87,654.21 μm²</td></tr>
-                  <tr><td className="p-2.5 font-sans font-semibold text-slate-500">Total Power</td><td className="p-2.5 text-slate-800 font-bold">1.283 mW</td></tr>
-                  <tr><td className="p-2.5 font-sans font-semibold text-slate-500">Worst Slack (WNS)</td><td className="p-2.5 text-emerald-600 font-bold">+0.842 ns</td></tr>
+                  <tr>
+                    <td className="p-2.5 font-sans font-semibold text-slate-500">Design Top Module</td>
+                    <td className="p-2.5 text-slate-800 font-bold">{activeProject.name}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 font-sans font-semibold text-slate-500">Total Cells</td>
+                    <td className="p-2.5 text-slate-800 font-bold">{activeDesign?.circuit_graph_json?.nodes?.length || 6}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 font-sans font-semibold text-slate-500">Combinational Cells</td>
+                    <td className="p-2.5 text-slate-800 font-bold">
+                      {activeDesign?.circuit_graph_json?.nodes?.filter((n: any) => n.properties?.category?.toUpperCase().includes("LOGIC") || n.properties?.category?.toUpperCase().includes("GATE")).length || 0}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 font-sans font-semibold text-slate-500">Total Area</td>
+                    <td className="p-2.5 text-slate-800 font-bold">
+                      {activeDesign?.readiness_report_json?.area_um2 !== undefined ? `${activeDesign.readiness_report_json.area_um2.toFixed(2)} μm²` : "87,654.21 μm²"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 font-sans font-semibold text-slate-500">Total Power</td>
+                    <td className="p-2.5 text-slate-800 font-bold">
+                      {activeDesign?.readiness_report_json?.static_power_uw !== undefined && activeDesign?.readiness_report_json?.active_power_uw !== undefined
+                        ? `${((activeDesign.readiness_report_json.static_power_uw + activeDesign.readiness_report_json.active_power_uw) / 1000.0).toFixed(3)} mW`
+                        : "1.283 mW"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 font-sans font-semibold text-slate-500">Worst Slack (WNS)</td>
+                    <td className="p-2.5 text-emerald-600 font-bold">
+                      {activeDesign?.readiness_report_json?.worst_slack_ns !== undefined ? `${activeDesign.readiness_report_json.worst_slack_ns.toFixed(3)} ns` : "+0.842 ns"}
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>

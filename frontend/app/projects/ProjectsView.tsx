@@ -23,7 +23,8 @@ import {
   BarChart2,
   BookOpen,
   Settings,
-  Sparkles
+  Sparkles,
+  Trash2
 } from "lucide-react";
 
 export function ProjectsView() {
@@ -165,17 +166,6 @@ export function ProjectsView() {
             <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 border border-white" />
           </button>
-
-          {/* User Profile */}
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm font-sans shadow-sm">
-              M
-            </div>
-            <span className="text-xs font-semibold text-slate-800 group-hover:text-slate-900 transition">
-              Motinath
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </div>
 
           {/* New Project Button */}
           <button
@@ -380,7 +370,7 @@ export function ProjectsView() {
                             className="p-1 rounded-md text-slate-350 hover:bg-slate-50 hover:text-rose-600 transition"
                             title="Delete"
                           >
-                            <MoreVertical className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -521,11 +511,16 @@ export function ProjectsView() {
                           <Star className={`w-4 h-4 ${isStarred ? "fill-blue-500 text-blue-500" : ""}`} />
                         </button>
                         <button
-                          onClick={() => alert(`Options panel for: ${p.name}`)}
-                          className="p-1 rounded text-slate-400 hover:bg-slate-50 hover:text-slate-655 transition"
-                          title="Options"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm("Are you sure you want to delete this project?")) {
+                              handleDeleteProject(p.id);
+                            }
+                          }}
+                          className="p-1 rounded text-slate-400 hover:bg-slate-50 hover:text-rose-600 transition"
+                          title="Delete"
                         >
-                          <MoreVertical className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

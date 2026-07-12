@@ -5,19 +5,19 @@ import { useRouter, usePathname } from "next/navigation";
 import { api } from "../lib/api";
 import { GlobalSidebar } from "../components/layout/GlobalSidebar";
 import { GlobalHeader } from "../components/layout/GlobalHeader";
-import { 
-  Folder, 
-  Cpu, 
-  Activity, 
-  Shield, 
-  FileText, 
-  Plus, 
-  Sparkles, 
-  Terminal, 
-  ShieldCheck, 
-  Globe, 
-  Info, 
-  Database 
+import {
+  Folder,
+  Cpu,
+  Activity,
+  Shield,
+  FileText,
+  Plus,
+  Sparkles,
+  Terminal,
+  ShieldCheck,
+  Globe,
+  Info,
+  Database
 } from "lucide-react";
 
 // Mock & Initial Data Definitions
@@ -407,7 +407,7 @@ interface AppContextType {
   setAuthLoading: React.Dispatch<React.SetStateAction<boolean>>;
   authError: string;
   setAuthError: React.Dispatch<React.SetStateAction<string>>;
-  
+
   loadLibraryData: () => Promise<void>;
   loadTopologies: () => Promise<void>;
   handleTogglePdk: (pdkName: string, currentlyEnabled: boolean) => Promise<void>;
@@ -502,8 +502,8 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       console.error("Failed to load component library from backend", err);
       setLibComponents([
-        { name: "NMOS", pins: ["D", "G", "S", "B"], parameters: {W:0.36, L:0.15}, model: "sky130_fd_pr__nfet_01v8", category: "Basic Components", desc: "1.8V Standard NMOS" },
-        { name: "PMOS", pins: ["D", "G", "S", "B"], parameters: {W:0.54, L:0.15}, model: "sky130_fd_pr__pfet_01v8", category: "Basic Components", desc: "1.8V Standard PMOS" }
+        { name: "NMOS", pins: ["D", "G", "S", "B"], parameters: { W: 0.36, L: 0.15 }, model: "sky130_fd_pr__nfet_01v8", category: "Basic Components", desc: "1.8V Standard NMOS" },
+        { name: "PMOS", pins: ["D", "G", "S", "B"], parameters: { W: 0.54, L: 0.15 }, model: "sky130_fd_pr__pfet_01v8", category: "Basic Components", desc: "1.8V Standard PMOS" }
       ]);
       setPdkStatuses({ "SKY130": true, "TSMC65": true });
     }
@@ -516,22 +516,22 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       console.error("Failed to load topology registry from backend", err);
       setAvailableTopologies([
-        { canonical: "6T SRAM",              name: "6T SRAM Cell",          category: "Memory",  optimizations: ["Low Leakage","High Speed","Minimal Area","default"] },
-        { canonical: "8T SRAM",              name: "8T SRAM Sep. Read",     category: "Memory",  optimizations: ["Low Leakage","High Speed","default"] },
-        { canonical: "9T SRAM",              name: "9T SRAM + Sleep Tx",    category: "Memory",  optimizations: ["Low Leakage","Ultra Low Power","default"] },
-        { canonical: "10T SRAM",             name: "10T SRAM Sub-Vt",       category: "Memory",  optimizations: ["Ultra Low Power","Low Leakage","default"] },
-        { canonical: "Current Mirror",       name: "Basic Current Mirror",  category: "Analog",  optimizations: ["Low Leakage","High Precision","High Speed","default"] },
-        { canonical: "Cascode Current Mirror",name: "Cascode Mirror",       category: "Analog",  optimizations: ["High Precision","Low Voltage","default"] },
-        { canonical: "Differential Pair",    name: "Differential Pair",     category: "Analog",  optimizations: ["Low Leakage","High Speed","High Gain","default"] },
-        { canonical: "StrongARM Comparator", name: "StrongARM Comparator",  category: "Analog",  optimizations: ["High Speed","Low Power","default"] },
-        { canonical: "Bandgap Reference",    name: "Bandgap Reference",     category: "Analog",  optimizations: ["Low Power","High Precision","default"] },
-        { canonical: "Folded Cascode OTA",   name: "Folded Cascode OTA",    category: "Analog",  optimizations: ["High Gain","High Speed","default"] },
-        { canonical: "Ring Oscillator",      name: "Ring Oscillator",       category: "Digital", optimizations: ["Low Leakage","High Speed","Low Power","default"] },
-        { canonical: "Inverter",             name: "CMOS Inverter",         category: "Digital", optimizations: ["High Speed","Low Power","Minimal Area","default"] },
-        { canonical: "NAND Gate",            name: "CMOS 2-Input NAND",     category: "Digital", optimizations: ["High Speed","Low Power","default"] },
-        { canonical: "NOR Gate",             name: "CMOS 2-Input NOR",      category: "Digital", optimizations: ["High Speed","Low Power","default"] },
-        { canonical: "D Flip-Flop",          name: "D Flip-Flop",           category: "Digital", optimizations: ["High Speed","Low Power","default"] },
-        { canonical: "D Latch",              name: "D Latch",               category: "Digital", optimizations: ["High Speed","Low Power","default"] },
+        { canonical: "6T SRAM", name: "6T SRAM Cell", category: "Memory", optimizations: ["Low Leakage", "High Speed", "Minimal Area", "default"] },
+        { canonical: "8T SRAM", name: "8T SRAM Sep. Read", category: "Memory", optimizations: ["Low Leakage", "High Speed", "default"] },
+        { canonical: "9T SRAM", name: "9T SRAM + Sleep Tx", category: "Memory", optimizations: ["Low Leakage", "Ultra Low Power", "default"] },
+        { canonical: "10T SRAM", name: "10T SRAM Sub-Vt", category: "Memory", optimizations: ["Ultra Low Power", "Low Leakage", "default"] },
+        { canonical: "Current Mirror", name: "Basic Current Mirror", category: "Analog", optimizations: ["Low Leakage", "High Precision", "High Speed", "default"] },
+        { canonical: "Cascode Current Mirror", name: "Cascode Mirror", category: "Analog", optimizations: ["High Precision", "Low Voltage", "default"] },
+        { canonical: "Differential Pair", name: "Differential Pair", category: "Analog", optimizations: ["Low Leakage", "High Speed", "High Gain", "default"] },
+        { canonical: "StrongARM Comparator", name: "StrongARM Comparator", category: "Analog", optimizations: ["High Speed", "Low Power", "default"] },
+        { canonical: "Bandgap Reference", name: "Bandgap Reference", category: "Analog", optimizations: ["Low Power", "High Precision", "default"] },
+        { canonical: "Folded Cascode OTA", name: "Folded Cascode OTA", category: "Analog", optimizations: ["High Gain", "High Speed", "default"] },
+        { canonical: "Ring Oscillator", name: "Ring Oscillator", category: "Digital", optimizations: ["Low Leakage", "High Speed", "Low Power", "default"] },
+        { canonical: "Inverter", name: "CMOS Inverter", category: "Digital", optimizations: ["High Speed", "Low Power", "Minimal Area", "default"] },
+        { canonical: "NAND Gate", name: "CMOS 2-Input NAND", category: "Digital", optimizations: ["High Speed", "Low Power", "default"] },
+        { canonical: "NOR Gate", name: "CMOS 2-Input NOR", category: "Digital", optimizations: ["High Speed", "Low Power", "default"] },
+        { canonical: "D Flip-Flop", name: "D Flip-Flop", category: "Digital", optimizations: ["High Speed", "Low Power", "default"] },
+        { canonical: "D Latch", name: "D Latch", category: "Digital", optimizations: ["High Speed", "Low Power", "default"] },
       ]);
     }
   };
@@ -552,21 +552,24 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   const loadProjects = async () => {
     try {
       const data = await api.listProjects();
+      setProjects(data);
       if (data.length > 0) {
-        setProjects(data);
         handleSelectProject(data[0]);
       } else {
-        setProjects(MOCK_PROJECTS);
-        handleSelectProject(MOCK_PROJECTS[0]);
+        setSelectedProjectId(null);
+        setActiveProject(null);
+        setDesigns([]);
+        setActiveDesign(null);
+        setConsoleLogs("");
       }
     } catch (err: any) {
-      console.error("Failed to load projects, falling back to guest demo", err);
-      setProjects(MOCK_PROJECTS);
-      setDesigns([GUEST_DESIGN]);
-      setActiveProject(MOCK_PROJECTS[0]);
-      setSelectedProjectId(MOCK_PROJECTS[0].id);
-      setActiveDesign(GUEST_DESIGN);
-      setConsoleLogs(GUEST_DESIGN.logs_content || "");
+      console.error("Failed to load projects", err);
+      setProjects([]);
+      setSelectedProjectId(null);
+      setActiveProject(null);
+      setDesigns([]);
+      setActiveDesign(null);
+      setConsoleLogs("");
     }
   };
 
@@ -575,8 +578,8 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     setActiveProject(project);
     setActiveDesign(null);
     setSelectedComponentId(null);
-    
-    if (project.id === -1 || project.id > 0) {
+
+    if (project.id === -1) {
       setDesigns([GUEST_DESIGN]);
       setActiveDesign(GUEST_DESIGN);
       setConsoleLogs(GUEST_DESIGN.logs_content || "");
@@ -612,10 +615,10 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       setProjects([...projects, newProj]);
       handleSelectProject(newProj);
       setShowNewModal(false);
-      
+
       setNewName("");
       setNewDesc("");
-      
+
       if (apiDesignType === "Ring Oscillator") {
         setPrompt(`Generate a 3-stage Ring Oscillator using ${newTech} optimized for high speed.`);
         setOptimization("High Speed");
@@ -629,7 +632,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
         setPrompt(`Generate a 6T SRAM cell using ${newTech} optimized for low leakage.`);
         setOptimization("Low Leakage");
       }
-      
+
       router.push("/overview");
     } catch (err) {
       alert("Failed to create project");
@@ -662,7 +665,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
   const handleGenerate = async () => {
     if (!selectedProjectId) return;
-    
+
     setGenerating(true);
     setPipelineRunning(true);
     setPipelineStageIndex(0);
@@ -723,70 +726,48 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const runVerificationCheck = () => {
+  const runVerificationCheck = async () => {
+    if (!activeDesign) return;
     setVerifyStatus("running");
-    setTimeout(() => {
-      setVerifyStatus("passed");
-    }, 1500);
+    try {
+      const data = await api.getVerificationChecks(activeDesign.id);
+      setTimeout(() => {
+        if (data.status === "PASSED" || data.overall_status === "PASSED" || data.status === "SUCCESS") {
+          setVerifyStatus("passed");
+        } else {
+          setVerifyStatus("issues");
+        }
+      }, 1000);
+    } catch (err) {
+      setVerifyStatus("issues");
+    }
   };
 
-  const runSizingOptimization = () => {
+  const runSizingOptimization = async () => {
     if (!activeDesign || !activeProject) return;
-    
-    const updatedNodes = activeDesign.circuit_graph_json?.nodes?.map((n: any) => {
-      if (n.id === "M_PU1" || n.id === "M_PU2") {
-        return {
-          ...n,
-          properties: {
-            ...n.properties,
-            parameters: {
-              ...n.properties.parameters,
-              W: 1.8
-            }
-          }
-        };
-      }
-      return n;
-    });
 
-    const currentOverall = activeDesign.readiness_report_json?.overall || 94;
-    const currentDelay = activeDesign.readiness_report_json?.stage_delay_ps || 55;
+    try {
+      // SRAM PMOS pull-up width tuning override parameters
+      const optimizationUpdates = {
+        "M_PU1": { "W": 1.8 },
+        "M_PU2": { "W": 1.8 }
+      };
 
-    const newDesign = {
-      ...activeDesign,
-      id: activeDesign.id + 1,
-      version: (activeDesign.version || 1) + 1,
-      prompt: `${activeDesign.prompt} [Leakage Optimized]`,
-      circuit_graph_json: {
-        ...activeDesign.circuit_graph_json,
-        nodes: updatedNodes
-      },
-      readiness_report_json: {
-        ...activeDesign.readiness_report_json,
-        overall: Math.min(currentOverall + 2, 100),
-        power: 96,
-        static_power_uw: 0.0035,
-        stage_delay_ps: currentDelay + 4
-      }
-    };
+      const newDesign = await api.tuneDesign(
+        activeDesign.id,
+        optimizationUpdates,
+        vddSlider,
+        "Low Leakage"
+      );
 
-    const recomputed = recomputeSimulationClient(
-      activeProject.design_type,
-      "Low Leakage",
-      updatedNodes,
-      vddSlider
-    );
-
-    newDesign.simulation_results_json = {
-      ...newDesign.simulation_results_json,
-      waveforms: recomputed.waveforms,
-      metrics: recomputed.metrics
-    };
-
-    setActiveDesign(newDesign);
-    setDesigns([newDesign, ...designs]);
-    setIsOptimized(true);
-    alert("Optimization applied: PMOS width reduced from 2.0u to 1.8u. Simulated static power decreased by 13%.");
+      setActiveDesign(newDesign);
+      setDesigns([newDesign, ...designs]);
+      setConsoleLogs(newDesign.logs_content || "");
+      setIsOptimized(true);
+      alert("Optimization successfully compiled on backend: PMOS pull-up width reduced to 1.8u.");
+    } catch (err: any) {
+      alert(`Backend sizing optimization failed: ${err.message}`);
+    }
   };
 
   const handleLogout = () => {
@@ -818,7 +799,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       } else {
         await api.login(loginEmail, loginPassword);
       }
-      
+
       setIsLoggedIn(true);
       setShowLoginModal(false);
       await loadProjects();
@@ -847,7 +828,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       setIsSearchOpen(true);
       return;
     }
-    
+
     if (id === 'dashboard') {
       router.push('/dashboard');
     } else if (id === 'projects' || id === 'projects-all' || id === 'projects-recent' || id === 'projects-templates') {
@@ -888,39 +869,29 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const handleComponentParameterChange = (paramName: string, value: number) => {
-    checkAuthAndRun(() => {
-      if (!activeDesign) return;
+  const handleComponentParameterChange = async (paramName: string, value: number) => {
+    if (!activeDesign || !selectedComponentId) return;
 
-      const updatedDesign = JSON.parse(JSON.stringify(activeDesign));
+    try {
+      const tunedComponentUpdate = {
+        [selectedComponentId]: {
+          [paramName]: value
+        }
+      };
 
-      const node = updatedDesign.circuit_graph_json.nodes.find(
-        (n: any) => n.id === selectedComponentId
+      const newDesign = await api.tuneDesign(
+        activeDesign.id,
+        tunedComponentUpdate,
+        vddSlider,
+        optimization
       );
-      if (!node) return;
-      node.properties.parameters[paramName] = value;
 
-      const planComp = updatedDesign.plan_json.components.find(
-        (c: any) => c.id === selectedComponentId
-      );
-      if (planComp) {
-        planComp.parameters[paramName] = value;
-      }
-
-      const netlistText = regenerateNetlistClient(updatedDesign);
-      updatedDesign.netlist_content = netlistText;
-
-      const simResults = recomputeSimulationClient(
-        updatedDesign.requirements_json.type,
-        updatedDesign.requirements_json.optimization,
-        updatedDesign.circuit_graph_json.nodes,
-        vddSlider
-      );
-      updatedDesign.simulation_results_json = simResults;
-
-      setActiveDesign(updatedDesign);
-      setDesigns(prev => prev.map(d => d.id === updatedDesign.id ? updatedDesign : d));
-    });
+      setActiveDesign(newDesign);
+      setDesigns([newDesign, ...designs]);
+      setConsoleLogs(newDesign.logs_content || "");
+    } catch (err: any) {
+      console.error("Failed to apply parameter tuning on backend compiler", err);
+    }
   };
 
   const regenerateNetlistClient = (design: any): string => {
@@ -977,7 +948,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
         const g_net = pin_to_net["G"] || "GND";
         const s_net = pin_to_net["S"] || "GND";
         const b_net = pin_to_net["B"] || "GND";
-        
+
         const w_val = params["W"] || 0.36;
         const l_val = params["L"] || 0.15;
         const m_val = params["M"] || 1;
@@ -1024,7 +995,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
       const baseDelay = 55e-12;
       const calculatedDelay = baseDelay * (l_pg / w_pg) / (0.25 / 0.45);
-      
+
       let sumRatio = 0;
       nodes.forEach((n: any) => {
         if (["NMOS", "PMOS"].includes(n.category)) {
@@ -1047,13 +1018,13 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       for (const t of time_pts) {
         const wl = (t >= 2.0 && t <= 6.0) ? vdd : 0.0;
         wl_pts.push(wl);
-        
+
         const bl = t < 2.5 ? vdd : vdd;
         bl_pts.push(bl);
         const blb = t < 2.5 ? vdd : 0.0;
         blb_pts.push(blb);
 
-        const flipTime = 2.8 + (calculatedDelay * 1e9); 
+        const flipTime = 2.8 + (calculatedDelay * 1e9);
         if (t < flipTime) {
           q_pts.push(0.0);
           qb_pts.push(vdd);
@@ -1079,8 +1050,8 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       metrics = {
         "Static Leakage Power": `${round(leakagePower * 1e9, 2)} nW`,
         "Write Access Time": `${round(calculatedDelay * 1e12, 1)} ps`,
-        "Static Noise Margin (SNM)": `${round(345 * (cellRatio/1.3), 0)} mV`,
-        "Active Write Power": `${round(12.4 * (vdd/1.8)**2, 2)} uW`
+        "Static Noise Margin (SNM)": `${round(345 * (cellRatio / 1.3), 0)} mV`,
+        "Active Write Power": `${round(12.4 * (vdd / 1.8) ** 2, 2)} uW`
       };
 
     } else if (topology === "Ring Oscillator") {
@@ -1092,7 +1063,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
       const baseTd = 50e-12;
       const calculatedTd = baseTd * (l_val / w_n) / (0.15 / 0.36);
-      
+
       const stages = nodes.filter((n: any) => n.category === "PMOS").length;
       const frequency = 1.0 / (2.0 * stages * calculatedTd);
       const freq_ghz = frequency / 1e9;
@@ -1119,7 +1090,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       const vds_pts = Array.from({ length: points_count }, (_, i) => round(i * 0.02, 2));
       const refNode = nodes.find((n: any) => n.id === "M_REF");
       const mirNode = nodes.find((n: any) => n.id === "M_MIR");
-      
+
       const w_ref = refNode?.properties?.parameters?.W || 1.0;
       const l_ref = refNode?.properties?.parameters?.L || 0.5;
       const w_mir = mirNode?.properties?.parameters?.W || 1.0;
@@ -1136,8 +1107,8 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       const iref_pts: number[] = [];
 
       for (const vds of vds_pts) {
-        const iout = vds < 0.15 
-          ? iout_target * (vds / 0.15) 
+        const iout = vds < 0.15
+          ? iout_target * (vds / 0.15)
           : iout_target * (1.0 + lmbda * (vds - 0.15));
         iout_pts.push(round(iout, 3));
         iref_pts.push(round(iref_target, 3));
@@ -1151,7 +1122,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
       metrics = {
         "Mirror Gain Accuracy": `${round(100 - Math.abs(1 - scale) * 10, 1)} %`,
-        "Output Resistance (Rout)": `${round(rout/1e3, 1)} kOhm`,
+        "Output Resistance (Rout)": `${round(rout / 1e3, 1)} kOhm`,
         "Compliance Voltage (Vmin)": "145 mV",
         "Reference Power dissipation": `${round(iref_target * vdd, 2)} uW`
       };
@@ -1187,9 +1158,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
       metrics = {
         "Differential Gain": `${round(20 * Math.log10(gain), 1)} dB`,
-        "Unity Gain Bandwidth (GBW)": `${round(bw/1e6, 1)} MHz`,
+        "Unity Gain Bandwidth (GBW)": `${round(bw / 1e6, 1)} MHz`,
         "Common-Mode Rejection Ratio (CMRR)": "72.4 dB",
-        "Power Consumption": `${round(350 * (vdd/1.8), 2)} uW`
+        "Power Consumption": `${round(350 * (vdd / 1.8), 2)} uW`
       };
     }
 
@@ -1201,15 +1172,15 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   };
 
   const handleSignalProbeToggle = (sig: string) => {
-    setProbedSignals(prev => 
+    setProbedSignals(prev =>
       prev.includes(sig) ? prev.filter(s => s !== sig) : [...prev, sig]
     );
   };
 
   const handleNetlistLineClick = (lineText: string) => {
-    const match = lineText.match(/\bX(M_PU\d|M_PD\d|M_PG\d|M_P\d+|M_N\d+|M_REF|M_MIR|M_IN1|M_IN2|M_TAIL|M_L1|M_L2|V_VDD|V_GND)\b/i) 
+    const match = lineText.match(/\bX(M_PU\d|M_PD\d|M_PG\d|M_P\d+|M_N\d+|M_REF|M_MIR|M_IN1|M_IN2|M_TAIL|M_L1|M_L2|V_VDD|V_GND)\b/i)
       || lineText.match(/\b(M_PU\d|M_PD\d|M_PG\d|M_P\d+|M_N\d+|M_REF|M_MIR|M_IN1|M_IN2|M_TAIL|M_L1|M_L2|V_VDD|V_GND)\b/i);
-    
+
     if (match) {
       const compId = match[1].toUpperCase();
       setSelectedComponentId(compId);
@@ -1387,6 +1358,105 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </div>
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Plus className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 font-sans">Create New Project</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewModal(false)}
+                className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 hover:bg-slate-100 rounded-lg text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleCreateProject} className="p-6 space-y-4">
+              {/* Project Name */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Project Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 8T_SRAM_SKY130, my_ring_oscillator"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 px-3.5 py-2.5 rounded-xl outline-none font-sans focus:border-blue-500 focus:bg-white transition"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Tech Node */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">PDK Node</label>
+                  <select
+                    value={newTech}
+                    onChange={(e) => setNewTech(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 px-3 py-2.5 rounded-xl outline-none font-sans focus:border-blue-500 focus:bg-white transition cursor-pointer"
+                  >
+                    <option value="SKY130">Sky130 (130nm)</option>
+                    <option value="GF180">GF180MCU (180nm)</option>
+                    <option value="FreePDK45">FreePDK (45nm)</option>
+                  </select>
+                </div>
+
+                {/* Project Category */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Design Category</label>
+                  <select
+                    value={projectNodeType}
+                    onChange={(e) => setProjectNodeType(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 px-3 py-2.5 rounded-xl outline-none font-sans focus:border-blue-500 focus:bg-white transition cursor-pointer"
+                  >
+                    <option value="Memory">Memory (SRAM)</option>
+                    <option value="Digital IC">Digital (Ring Oscillator)</option>
+                    <option value="Analog IC">Analog (Current Mirror)</option>
+                    <option value="Mixed Signal">Mixed Signal</option>
+                    <option value="Custom Circuit">Custom Circuit</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Description</label>
+                <textarea
+                  rows={3}
+                  placeholder="Describe your design block or simulation requirements..."
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 px-3.5 py-2.5 rounded-xl outline-none font-sans focus:border-blue-500 focus:bg-white transition resize-none"
+                />
+              </div>
+
+              {/* Actions Footer */}
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-slate-100 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition"
+                >
+                  Create Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AppContext.Provider>
   );
 };

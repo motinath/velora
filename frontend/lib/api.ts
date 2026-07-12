@@ -67,6 +67,9 @@ export const api = {
     return !!localStorage.getItem("velora_token");
   },
 
+  // Dashboard
+  getDashboardStats: () => request("/dashboard/stats"),
+
   // Projects
   listProjects: () => request("/projects/"),
   createProject: (name: string, technology: string = "SKY130", designType: string = "Memory Cell", description: string = "") => 
@@ -85,6 +88,11 @@ export const api = {
     request(`/designs/project/${projectId}/generate`, {
       method: "POST",
       body: JSON.stringify({ prompt })
+    }),
+  tuneDesign: (designId: number, components: Record<string, Record<string, number>>, vdd: number, optimization: string) =>
+    request(`/designs/${designId}/tune`, {
+      method: "POST",
+      body: JSON.stringify({ components, vdd, optimization })
     }),
   listTopologies: () => request("/designs/topologies"),
   getDesignHistory: (projectId: number) => request(`/designs/project/${projectId}/history`),
@@ -130,6 +138,8 @@ export const api = {
     request(`/designs/project/${projectId}/rollback/${version}`, { method: "POST" }),
   getDesignIntents: (designId: number) => 
     request(`/designs/${designId}/intents`),
+  getVerificationChecks: (designId: number) => 
+    request(`/verification/${designId}/checks`),
 
   // Plugins & EDA tool execution
   listPlugins: () => request("/plugins/"),

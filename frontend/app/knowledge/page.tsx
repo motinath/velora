@@ -1,6 +1,6 @@
 "use client";
 
-import { KnowledgeView } from "../../components/views/KnowledgeView";
+import { KnowledgeView } from "./KnowledgeView";
 
 export default function KnowledgePage() {
   return <KnowledgeView />;

@@ -1,6 +1,6 @@
 "use client";
 
-import { SchematicView } from "../../components/views/SchematicView";
+import { SchematicView } from "./SchematicView";
 
 export default function SchematicPage() {
   return <SchematicView />;

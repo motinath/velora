@@ -1,6 +1,6 @@
 "use client";
 
-import { SettingsView } from "../../components/views/SettingsView";
+import { SettingsView } from "./SettingsView";
 
 export default function SettingsPage() {
   return <SettingsView />;

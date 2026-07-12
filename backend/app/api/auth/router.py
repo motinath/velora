@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.workspace.database.connection import get_db
 from app.workspace.database.models import User
 from app.workspace.database.schemas import UserCreate, UserResponse, Token, UserLogin
-from app.utils.auth import get_password_hash, verify_password, create_access_token
+from app.utils.auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -55,3 +55,7 @@ def login_oauth(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
         "access_token": create_access_token(user.id),
         "token_type": "bearer"
     }
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user

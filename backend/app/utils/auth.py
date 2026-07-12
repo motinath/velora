@@ -55,4 +55,7 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         db.add(user)
         db.commit()
         db.refresh(user)
+
+        # No default projects seeded on creation. The workspace starts completely clean.
+        pass
     return user

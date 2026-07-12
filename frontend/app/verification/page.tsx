@@ -1,6 +1,6 @@
 "use client";
 
-import { VerificationView } from "../../components/views/VerificationView";
+import { VerificationView } from "./VerificationView";
 
 export default function VerificationPage() {
   return <VerificationView />;

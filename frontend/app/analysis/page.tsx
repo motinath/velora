@@ -1,6 +1,6 @@
 "use client";
 
-import { AnalysisView } from "../../components/views/AnalysisView";
+import { AnalysisView } from "./AnalysisView";
 
 export default function AnalysisPage() {
   return <AnalysisView />;
