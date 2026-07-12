@@ -11,7 +11,8 @@ import {
   FileText, 
   BookOpen, 
   Settings, 
-  LogOut 
+  LogOut,
+  TrendingUp
 } from "lucide-react";
 
 export type NavItemData = {
@@ -45,7 +46,7 @@ function VeloraLogo() {
         <span className="text-[16px] font-extrabold tracking-tight text-blue-600 font-sans leading-none uppercase">
           VELORA
         </span>
-        <span className="text-[9px] text-slate-500 font-sans font-bold uppercase tracking-wider mt-1 leading-none">
+        <span className="text-[9px] text-slate-505 font-sans font-bold uppercase tracking-wider mt-1 leading-none">
           AI CHIP COPILOT
         </span>
       </div>
@@ -74,7 +75,7 @@ function NavItemComponent({
       className={`group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 select-none font-sans font-medium text-sm
         ${isActive 
           ? 'bg-blue-50 text-blue-600 font-bold' 
-          : 'text-slate-650 hover:bg-slate-50 hover:text-slate-900'
+          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
         }
       `}
       onClick={() => onSelect(item.id)}
@@ -106,6 +107,7 @@ export function GlobalSidebar({
     { id: 'simulation', title: 'Simulation', icon: Activity },
     { id: 'verification', title: 'Verification', icon: ShieldCheck },
     { id: 'reports', title: 'Reports', icon: FileText },
+    { id: 'analysis', title: 'Analysis', icon: TrendingUp },
     { id: 'knowledge', title: 'Knowledge', icon: BookOpen }
   ];
 

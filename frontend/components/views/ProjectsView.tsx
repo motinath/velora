@@ -1,18 +1,29 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAppContext } from "../../app/providers";
 import { 
+  Search, 
   Plus, 
-  ChevronRight, 
-  Sparkles, 
-  Cpu, 
+  ChevronDown, 
+  LayoutGrid, 
+  List, 
+  Star, 
+  MoreVertical, 
+  Folder, 
   FileCode, 
-  Activity, 
-  CheckCircle, 
-  BarChart2, 
-  BookOpen, 
-  Settings 
+  Cpu, 
+  Activity,
+  Share2,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Bell,
+  CheckCircle,
+  BarChart2,
+  BookOpen,
+  Settings,
+  Sparkles
 } from "lucide-react";
 
 export function ProjectsView() {
@@ -27,92 +38,515 @@ export function ProjectsView() {
     handleDeleteProject
   } = useAppContext();
 
-  const filteredProjects = projects.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.design_type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Tab & Filters State
+  const [activeTab, setActiveTab] = useState<"all" | "recent" | "starred" | "templates" | "archived">("all");
+  const [selectedType, setSelectedType] = useState<string>("All");
+  const [selectedTech, setSelectedTech] = useState<string>("All");
+  const [selectedStatus, setSelectedStatus] = useState<string>("All");
+  const [selectedOwner, setSelectedOwner] = useState<string>("All");
+  const [sortBy, setSortBy] = useState<string>("Last Opened");
+  const [isGridView, setIsGridView] = useState<boolean>(true);
+  const [starredProjects, setStarredProjects] = useState<Record<number, boolean>>({ 1: true });
+
+  const toggleStar = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStarredProjects(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  // Helper styles based on project type
+  const getTypeStyling = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "schematic":
+      case "6t sram":
+        return {
+          icon: Folder,
+          bgColor: "bg-blue-50 text-blue-600",
+          badgeColor: "bg-blue-50 text-blue-600 border-blue-100",
+          progressColor: "bg-blue-600"
+        };
+      case "rtl":
+      case "i2c interface":
+      case "32-bit alu":
+        return {
+          icon: FileCode,
+          bgColor: "bg-emerald-50 text-emerald-600",
+          badgeColor: "bg-emerald-50 text-emerald-600 border-emerald-100",
+          progressColor: "bg-emerald-600"
+        };
+      case "analog":
+      case "pll":
+      case "12-bit successive approx adc":
+        return {
+          icon: Activity,
+          bgColor: "bg-purple-50 text-purple-600",
+          badgeColor: "bg-purple-50 text-purple-600 border-purple-100",
+          progressColor: "bg-purple-600"
+        };
+      case "mixed-signal":
+      case "spi controller":
+      default:
+        return {
+          icon: Cpu,
+          bgColor: "bg-orange-50 text-orange-655",
+          badgeColor: "bg-orange-50 text-orange-655 border-orange-100",
+          progressColor: "bg-orange-600"
+        };
+    }
+  };
+
+  const getStatusStyling = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "completed":
+        return "bg-emerald-50 text-emerald-600 border-emerald-100";
+      case "review":
+        return "bg-orange-50 text-orange-655 border-orange-100";
+      case "in progress":
+      default:
+        return "bg-blue-50 text-blue-600 border-blue-100";
+    }
+  };
+
+  // Filter projects list
+  const filteredProjects = projects.filter((p) => {
+    // Search match
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.technology.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.design_type.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    // Tab filters
+    if (activeTab === "starred" && !starredProjects[p.id]) return false;
+    
+    // Dropdown filters
+    const typeLabel = p.design_type.toLowerCase();
+    if (selectedType !== "All") {
+      if (selectedType === "Schematic" && !typeLabel.includes("sram")) return false;
+      if (selectedType === "RTL" && !typeLabel.includes("alu") && !typeLabel.includes("i2c")) return false;
+      if (selectedType === "Analog" && !typeLabel.includes("pll") && !typeLabel.includes("adc")) return false;
+      if (selectedType === "Mixed-Signal" && !typeLabel.includes("spi")) return false;
+    }
+
+    if (selectedTech !== "All" && p.technology.toLowerCase() !== selectedTech.toLowerCase()) return false;
+    if (selectedStatus !== "All" && (p.status || "In Progress").toLowerCase() !== selectedStatus.toLowerCase()) return false;
+
+    return true;
+  });
 
   return (
-    <div className="flex-1 flex flex-col p-8 overflow-y-auto space-y-6 bg-background">
-      <div className="flex justify-between items-center border-b border-border pb-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-800 font-sans">Projects</h1>
-          <p className="text-xs text-slate-500 mt-1">Manage and access your semiconductor repositories.</p>
+    <div className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc] font-sans select-text">
+      {/* Top Header Section */}
+      <div className="flex justify-between items-center px-8 py-5 bg-white border-b border-slate-100 shrink-0">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 font-sans">Projects</h1>
         </div>
-        <button
-          onClick={() => checkAuthAndRun(() => setShowNewModal(true))}
-          className="bg-slate-100 hover:bg-slate-200 text-primary border border-border text-xs font-bold uppercase px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          New Project
-        </button>
-      </div>
+        
+        <div className="flex items-center gap-6">
+          {/* Custom Search Input */}
+          <div className="relative w-64 md:w-80">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 pl-10 pr-16 py-2.5 rounded-full outline-none font-sans focus:border-blue-500 focus:bg-white transition"
+            />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-sm">
+              Ctrl + K
+            </kbd>
+          </div>
 
-      {/* Search Bar */}
-      <div className="w-full max-w-md bg-card border border-border rounded-xl flex items-center px-3 py-1 shadow-sm">
-        <span className="text-slate-400 text-[10px] mr-2 font-bold font-sans">SEARCH:</span>
-        <input
-          type="text"
-          placeholder="Search projects..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 bg-transparent text-xs text-slate-800 outline-none py-2 font-mono"
-        />
-        {searchQuery && (
-          <button onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-slate-600 text-xs font-sans">
-            ✕
+          {/* Bell Icon */}
+          <button className="relative p-2 text-slate-500 hover:text-slate-800 transition">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 border border-white" />
           </button>
-        )}
+
+          {/* User Profile */}
+          <div className="flex items-center gap-2 cursor-pointer group">
+            <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm font-sans shadow-sm">
+              M
+            </div>
+            <span className="text-xs font-semibold text-slate-800 group-hover:text-slate-900 transition">
+              Motinath
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+          </div>
+
+          {/* New Project Button */}
+          <button
+            onClick={() => checkAuthAndRun(() => setShowNewModal(true))}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Project</span>
+            <ChevronDown className="w-3 h-3 text-blue-250 border-l border-blue-500 pl-1 ml-1" />
+          </button>
+        </div>
       </div>
 
-      {/* List of projects */}
-      {filteredProjects.length === 0 ? (
-        <div className="p-12 text-center bg-card border border-border rounded-xl shadow-sm">
-          <p className="text-xs text-slate-500">No projects found matching query.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((p) => (
-            <div
-              key={p.id}
-              onClick={() => {
-                handleSelectProject(p);
-                handleSelect("proj-" + p.id);
-              }}
-              className="p-5 bg-card border border-border hover:border-primary/50 rounded-xl cursor-pointer transition relative group flex flex-col justify-between h-[150px] shadow-sm"
+      {/* Sub Navigation Tabs */}
+      <div className="px-8 bg-white border-b border-slate-100 flex gap-8 text-xs font-semibold text-slate-500 font-sans shrink-0">
+        {[
+          { id: "all", label: "All Projects" },
+          { id: "recent", label: "Recent" },
+          { id: "starred", label: "Starred" },
+          { id: "templates", label: "Templates" },
+          { id: "archived", label: "Archived" }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`py-4 cursor-pointer border-b-2 font-bold transition-all relative ${
+              activeTab === tab.id
+                ? "border-blue-600 text-blue-600 font-black"
+                : "border-transparent hover:text-slate-805"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filter and Control Bar */}
+      <div className="mx-8 mt-6 bg-white border border-slate-150 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm shrink-0">
+        <div className="flex flex-wrap items-center gap-3.5 text-xs text-slate-700 font-sans font-semibold">
+          {/* Inner Search bar */}
+          <div className="relative w-48">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 pl-8 pr-3 py-2 rounded-lg outline-none font-sans focus:border-blue-500 transition"
+            />
+          </div>
+
+          {/* Types Filter */}
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+            <span className="text-[10px] text-slate-400 uppercase">Type:</span>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="bg-transparent font-bold outline-none text-slate-700 cursor-pointer"
             >
-              <div>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xs font-bold text-slate-800 group-hover:text-primary truncate pr-6 font-sans">{p.name}</h3>
-                  {p.id !== -1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        checkAuthAndRun(() => handleDeleteProject(p.id));
-                      }}
-                      className="opacity-0 group-hover:opacity-100 text-[10px] text-slate-400 hover:text-rose-600 absolute right-4 top-4 transition"
-                      title="Delete Project"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-                <div className="flex gap-2 mb-3">
-                  <span className="bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded text-[8px] text-primary font-bold uppercase">{p.technology}</span>
-                  <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[8px] text-slate-600 uppercase font-semibold">{p.design_type}</span>
-                </div>
-                <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed">{p.description || "No description."}</p>
-              </div>
-              <div className="text-[8px] text-slate-500 font-mono flex justify-between items-center border-t border-slate-100 pt-2.5 mt-2">
-                <span>CREATED: {p.id === -1 ? "N/A" : new Date(p.created_at || Date.now()).toLocaleDateString()}</span>
-                <span className="text-primary opacity-0 group-hover:opacity-100 transition flex items-center gap-0.5 uppercase font-bold text-[9px]">
-                  Open Overview <ChevronRight className="w-3 h-3" />
-                </span>
-              </div>
+              <option value="All">All Types</option>
+              <option value="Schematic">Schematic</option>
+              <option value="RTL">RTL</option>
+              <option value="Analog">Analog</option>
+              <option value="Mixed-Signal">Mixed-Signal</option>
+            </select>
+          </div>
+
+          {/* Technologies Filter */}
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+            <span className="text-[10px] text-slate-400 uppercase">Tech:</span>
+            <select
+              value={selectedTech}
+              onChange={(e) => setSelectedTech(e.target.value)}
+              className="bg-transparent font-bold outline-none text-slate-700 cursor-pointer"
+            >
+              <option value="All">All Technologies</option>
+              <option value="Sky130">Sky130</option>
+              <option value="TSMC 65nm">TSMC 65nm</option>
+              <option value="GF 180nm">GF 180nm</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+            <span className="text-[10px] text-slate-400 uppercase">Status:</span>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="bg-transparent font-bold outline-none text-slate-700 cursor-pointer"
+            >
+              <option value="All">All Status</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Review">Review</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
+          {/* Owner Filter */}
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+            <span className="text-[10px] text-slate-400 uppercase">Owner:</span>
+            <select
+              value={selectedOwner}
+              onChange={(e) => setSelectedOwner(e.target.value)}
+              className="bg-transparent font-bold outline-none text-slate-700 cursor-pointer"
+            >
+              <option value="All">Owned by: All</option>
+              <option value="Me">Owned by: Me</option>
+              <option value="Shared">Owned by: Shared</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Sort and View Toggle */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-bold">
+            <span className="text-[10px] text-slate-400 uppercase">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-transparent font-bold outline-none text-slate-750 cursor-pointer"
+            >
+              <option>Sort by: Last Opened</option>
+              <option>Sort by: Alphabetical</option>
+              <option>Sort by: Progress</option>
+            </select>
+          </div>
+
+          {/* Grid / List Toggles */}
+          <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden p-0.5 bg-slate-50">
+            <button
+              onClick={() => setIsGridView(true)}
+              className={`p-1.5 rounded-md transition ${
+                isGridView ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsGridView(false)}
+              className={`p-1.5 rounded-md transition ${
+                !isGridView ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid View Display */}
+      {isGridView && (
+        <div className="px-8 mt-6">
+          {filteredProjects.length === 0 ? (
+            <div className="p-12 text-center bg-white border border-slate-150 rounded-2xl shadow-sm">
+              <p className="text-sm font-semibold text-slate-500 font-sans">No projects match the active filters.</p>
             </div>
-          ))}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((p) => {
+                const style = getTypeStyling(p.design_type);
+                const isStarred = starredProjects[p.id] ?? false;
+                const IconComponent = style.icon;
+
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => {
+                      handleSelectProject(p);
+                      handleSelect("proj-" + p.id);
+                    }}
+                    className="bg-white border border-slate-100 hover:border-blue-300 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer transition relative group flex flex-col justify-between h-[180px]"
+                  >
+                    <div>
+                      {/* Top Row: Icon + Title + Actions */}
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl ${style.bgColor} flex items-center justify-center shrink-0 shadow-sm`}>
+                            <IconComponent className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate pr-6 font-sans">
+                              {p.name}
+                            </h3>
+                            <span className="text-[9px] text-slate-400 font-mono tracking-tight">{p.technology}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={(e) => toggleStar(p.id, e)}
+                            className="p-1 rounded-md text-slate-350 hover:bg-slate-50 transition"
+                          >
+                            <Star className={`w-4 h-4 ${isStarred ? "fill-blue-500 text-blue-500" : "text-slate-300"}`} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm("Are you sure you want to delete this project?")) {
+                                handleDeleteProject(p.id);
+                              }
+                            }}
+                            className="p-1 rounded-md text-slate-350 hover:bg-slate-50 hover:text-rose-600 transition"
+                            title="Delete"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Middle row: Badges */}
+                      <div className="flex gap-2 mb-4">
+                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-md border ${style.badgeColor}`}>
+                          {p.design_type.includes("SRAM") ? "Schematic" : (p.design_type.includes("ALU") || p.design_type.includes("I2C") ? "RTL" : "Analog")}
+                        </span>
+                        <span className="bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md text-[9px] text-slate-500 uppercase font-semibold">
+                          {p.technology}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom row: Progress & Relative time */}
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-700 font-sans mb-1">
+                          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                            <div className={`${style.progressColor} h-full rounded-full`} style={{ width: `${p.progress || 50}%` }} />
+                          </div>
+                          <span className="pl-3 leading-none text-slate-500">{p.progress || 50}%</span>
+                        </div>
+                      </div>
+
+                      <div className="text-[9px] text-slate-450 font-mono flex justify-between items-center border-t border-slate-50 pt-2">
+                        <span className="flex items-center gap-1">🕒 Opened {p.last_opened || "2 hours ago"}</span>
+                        <span className="text-slate-600 flex items-center gap-1 font-sans font-semibold">
+                          <User className="w-3.5 h-3.5 p-0.5 bg-slate-100 rounded-full text-slate-500" />
+                          Owner
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
+
+      {/* All Projects Table List View */}
+      <div className="mx-8 mt-8 mb-12 bg-white border border-slate-150 rounded-2xl shadow-sm p-6 flex flex-col">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-sm font-bold text-slate-900 font-sans">All Projects</h2>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 text-[10px] font-bold tracking-wider text-slate-400 uppercase font-sans">
+                <th className="pb-3 pl-2">Project Name</th>
+                <th className="pb-3">Type</th>
+                <th className="pb-3">Technology</th>
+                <th className="pb-3">Progress</th>
+                <th className="pb-3">Last Opened</th>
+                <th className="pb-3">Owner</th>
+                <th className="pb-3">Status</th>
+                <th className="pb-3 text-right pr-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="text-xs font-sans text-slate-700 font-medium">
+              {filteredProjects.map((p) => {
+                const style = getTypeStyling(p.design_type);
+                const isStarred = starredProjects[p.id] ?? false;
+                const IconComponent = style.icon;
+                const activeTypeLabel = p.design_type.includes("SRAM") ? "Schematic" : (p.design_type.includes("ALU") || p.design_type.includes("I2C") ? "RTL" : "Analog");
+
+                return (
+                  <tr
+                    key={p.id}
+                    className="border-b border-slate-50 hover:bg-slate-50/50 transition cursor-pointer"
+                    onClick={() => {
+                      handleSelectProject(p);
+                      handleSelect("proj-" + p.id);
+                    }}
+                  >
+                    {/* Project Name */}
+                    <td className="py-4 pl-2 font-bold text-slate-800 flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg ${style.bgColor} flex items-center justify-center shrink-0`}>
+                        <IconComponent className="w-4 h-4" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span>{p.name}</span>
+                        {isStarred && <Star className="w-3.5 h-3.5 fill-blue-500 text-blue-500 shrink-0" />}
+                      </div>
+                    </td>
+
+                    {/* Type Badge */}
+                    <td className="py-4">
+                      <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-md border ${style.badgeColor}`}>
+                        {activeTypeLabel}
+                      </span>
+                    </td>
+
+                    {/* Technology */}
+                    <td className="py-4 text-slate-500 font-semibold">{p.technology}</td>
+
+                    {/* Progress Bar */}
+                    <td className="py-4 w-40">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                          <div className={`${style.progressColor} h-full rounded-full`} style={{ width: `${p.progress || 50}%` }} />
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-bold">{p.progress || 50}%</span>
+                      </div>
+                    </td>
+
+                    {/* Last Opened */}
+                    <td className="py-4 text-slate-550 font-semibold">{p.last_opened || "2 hours ago"}</td>
+
+                    {/* Owner */}
+                    <td className="py-4 text-slate-550">Me</td>
+
+                    {/* Status Badge */}
+                    <td className="py-4">
+                      <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${getStatusStyling(p.status || "In Progress")}`}>
+                        {p.status || "In Progress"}
+                      </span>
+                    </td>
+
+                    {/* Action Panel icons */}
+                    <td className="py-4 text-right pr-2">
+                      <div className="flex justify-end items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => alert(`Sharing project: ${p.name}`)}
+                          className="p-1 rounded text-slate-400 hover:bg-slate-50 hover:text-slate-655 transition"
+                          title="Share"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => toggleStar(p.id, e)}
+                          className="p-1 rounded text-slate-400 hover:bg-slate-50 hover:text-slate-655 transition"
+                          title="Star"
+                        >
+                          <Star className={`w-4 h-4 ${isStarred ? "fill-blue-500 text-blue-500" : ""}`} />
+                        </button>
+                        <button
+                          onClick={() => alert(`Options panel for: ${p.name}`)}
+                          className="p-1 rounded text-slate-400 hover:bg-slate-50 hover:text-slate-655 transition"
+                          title="Options"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer Pagination Bar */}
+        <div className="flex justify-between items-center border-t border-slate-100 pt-5 mt-4 text-xs font-sans text-slate-500">
+          <span>Showing 1 to {filteredProjects.length} of {filteredProjects.length} projects</span>
+          <div className="flex items-center gap-1.5 font-bold">
+            <button className="p-1.5 border border-slate-205 rounded-lg bg-slate-50 hover:bg-slate-100 transition"><ChevronLeft className="w-3.5 h-3.5" /></button>
+            <button className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-mono shadow-sm">1</button>
+            <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition font-mono">2</button>
+            <button className="p-1.5 border border-slate-205 rounded-lg bg-slate-50 hover:bg-slate-100 transition"><ChevronRight className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -155,12 +589,12 @@ export function ProjectOverviewView() {
       {/* Project description card */}
       <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
         <h2 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">Project Description</h2>
-        <p className="text-xs text-slate-600 leading-relaxed font-sans">{activeProject.description || "No project description provided. Use AI Design or Schematic editor to generate content."}</p>
+        <p className="text-xs text-slate-655 leading-relaxed font-sans">{activeProject.description || "No project description provided. Use AI Design or Schematic editor to generate content."}</p>
       </div>
 
       {/* Choose Your Task section */}
       <div className="space-y-4">
-        <h2 className="text-sm font-bold text-slate-800 tracking-tight">Choose Your Task</h2>
+        <h2 className="text-sm font-bold text-slate-808 tracking-tight">Choose Your Task</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Task 1: AI Design */}
@@ -229,7 +663,7 @@ export function ProjectOverviewView() {
             className="bg-card border border-border p-5 rounded-2xl shadow-sm hover:border-rose-500/50 cursor-pointer transition group"
           >
             <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-4">
-              <BarChart2 className="w-5 h-5 text-rose-505" />
+              <BarChart2 className="w-5 h-5 text-rose-500" />
             </div>
             <h3 className="text-xs font-bold text-slate-850 uppercase group-hover:text-rose-505 transition font-sans">Reports</h3>
             <p className="text-[10px] text-slate-500 mt-1 font-sans leading-relaxed">Check Tapeout aggregate margins readiness score indexes.</p>

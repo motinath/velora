@@ -29,6 +29,75 @@ export const GUEST_PROJECT = {
   description: "A standard 6-Transistor SRAM bitcell compiled using the open-source SKY130 process node rules. Optimized for low leakage under guest demonstration mode."
 };
 
+export const MOCK_PROJECTS = [
+  {
+    id: 1,
+    name: "6T_SRAM_SKY130",
+    technology: "Sky130",
+    design_type: "6T SRAM",
+    description: "A standard 6-Transistor SRAM bitcell compiled using the open-source SKY130 process node rules. Optimized for low leakage.",
+    progress: 68,
+    last_opened: "2 hours ago",
+    status: "In Progress",
+    starred: true
+  },
+  {
+    id: 2,
+    name: "I2C_Controller",
+    technology: "TSMC 65nm",
+    design_type: "I2C Interface",
+    description: "Intelligent I2C Serial Controller designed for low pin-count communication interfaces.",
+    progress: 75,
+    last_opened: "1 day ago",
+    status: "In Progress",
+    starred: false
+  },
+  {
+    id: 3,
+    name: "PLL_Design",
+    technology: "GF 180nm",
+    design_type: "PLL",
+    description: "A Phase-Locked Loop clock generator design optimized for low jitter and wide lock range.",
+    progress: 45,
+    last_opened: "2 days ago",
+    status: "Review",
+    starred: false
+  },
+  {
+    id: 4,
+    name: "ALU_32bit",
+    technology: "Sky130",
+    design_type: "32-bit ALU",
+    description: "A 32-bit Arithmetic Logic Unit with carry lookahead logic gates.",
+    progress: 80,
+    last_opened: "3 days ago",
+    status: "Completed",
+    starred: false
+  },
+  {
+    id: 5,
+    name: "SPI_FLASH_Controller",
+    technology: "TSMC 65nm",
+    design_type: "SPI Controller",
+    description: "High-speed Serial Peripheral Interface controller for SPI flash memory units.",
+    progress: 32,
+    last_opened: "4 days ago",
+    status: "In Progress",
+    starred: false
+  },
+  {
+    id: 6,
+    name: "ADC_12bit",
+    technology: "GF 180nm",
+    design_type: "12-bit Successive Approx ADC",
+    description: "A 12-bit Successive Approximation Register analog to digital converter.",
+    progress: 60,
+    last_opened: "5 days ago",
+    status: "In Progress",
+    starred: false
+  }
+];
+
 export const GUEST_DESIGN = {
   id: -1,
   project_id: -1,
@@ -483,19 +552,19 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   const loadProjects = async () => {
     try {
       const data = await api.listProjects();
-      setProjects(data);
       if (data.length > 0) {
+        setProjects(data);
         handleSelectProject(data[0]);
       } else {
-        setProjects([GUEST_PROJECT]);
-        handleSelectProject(GUEST_PROJECT);
+        setProjects(MOCK_PROJECTS);
+        handleSelectProject(MOCK_PROJECTS[0]);
       }
     } catch (err: any) {
       console.error("Failed to load projects, falling back to guest demo", err);
-      setProjects([GUEST_PROJECT]);
+      setProjects(MOCK_PROJECTS);
       setDesigns([GUEST_DESIGN]);
-      setActiveProject(GUEST_PROJECT);
-      setSelectedProjectId(GUEST_PROJECT.id);
+      setActiveProject(MOCK_PROJECTS[0]);
+      setSelectedProjectId(MOCK_PROJECTS[0].id);
       setActiveDesign(GUEST_DESIGN);
       setConsoleLogs(GUEST_DESIGN.logs_content || "");
     }
@@ -507,7 +576,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     setActiveDesign(null);
     setSelectedComponentId(null);
     
-    if (project.id === -1) {
+    if (project.id === -1 || project.id > 0) {
       setDesigns([GUEST_DESIGN]);
       setActiveDesign(GUEST_DESIGN);
       setConsoleLogs(GUEST_DESIGN.logs_content || "");
