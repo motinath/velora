@@ -6,7 +6,7 @@ interface RequestOptions extends RequestInit {
 
 async function request(path: string, options: RequestOptions = {}) {
   const headers = new Headers(options.headers || {});
-  
+
   if (options.tokenRequired !== false) {
     const token = localStorage.getItem("velora_token");
     if (token) {
@@ -40,7 +40,7 @@ async function request(path: string, options: RequestOptions = {}) {
 
 export const api = {
   // Auth
-  register: (email: string, password: string) => 
+  register: (email: string, password: string) =>
     request("/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, password }),
@@ -72,13 +72,18 @@ export const api = {
 
   // Projects
   listProjects: () => request("/projects/"),
-  createProject: (name: string, technology: string = "SKY130", designType: string = "Memory Cell", description: string = "") => 
+  createProject: (name: string, technology: string = "SKY130", designType: string = "Memory Cell", description: string = "") =>
     request("/projects/", {
       method: "POST",
       body: JSON.stringify({ name, technology, design_type: designType, description })
     }),
   getProject: (projectId: number) => request(`/projects/${projectId}`),
-  deleteProject: (projectId: number) => 
+  updateProject: (projectId: number, updateData: { name?: string; technology?: string; design_type?: string; description?: string }) =>
+    request(`/projects/${projectId}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData)
+    }),
+  deleteProject: (projectId: number) =>
     request(`/projects/${projectId}`, {
       method: "DELETE"
     }),
@@ -109,20 +114,20 @@ export const api = {
     });
   },
   listFiles: (projectId: number) => request(`/files/project/${projectId}`),
-  deleteFile: (fileId: number) => 
+  deleteFile: (fileId: number) =>
     request(`/files/${fileId}`, {
       method: "DELETE"
     }),
 
   // Chat
   listSessions: (projectId: number) => request(`/chat/sessions/project/${projectId}`),
-  createSession: (projectId: number, name: string) => 
+  createSession: (projectId: number, name: string) =>
     request("/chat/sessions", {
       method: "POST",
       body: JSON.stringify({ project_id: projectId, name })
     }),
   getSession: (sessionId: number) => request(`/chat/sessions/${sessionId}`),
-  sendMessage: (sessionId: number, content: string, contextMetadata?: any) => 
+  sendMessage: (sessionId: number, content: string, contextMetadata?: any) =>
     request(`/chat/sessions/${sessionId}/message`, {
       method: "POST",
       body: JSON.stringify({ content, context_metadata: contextMetadata })
@@ -134,16 +139,18 @@ export const api = {
   analyzeLog: (fileId: number) => request(`/analysis/log/analyze?file_id=${fileId}`, { method: "POST" }),
 
   // Version Rollbacks & Design Intents
-  rollbackDesign: (projectId: number, version: number) => 
+  rollbackDesign: (projectId: number, version: number) =>
     request(`/designs/project/${projectId}/rollback/${version}`, { method: "POST" }),
-  getDesignIntents: (designId: number) => 
+  getDesignIntents: (designId: number) =>
     request(`/designs/${designId}/intents`),
-  getVerificationChecks: (designId: number) => 
+  getVerificationChecks: (designId: number) =>
     request(`/verification/${designId}/checks`),
+  getSimulationWaveforms: (designId: number) =>
+    request(`/simulation/${designId}/waveforms`),
 
   // Plugins & EDA tool execution
   listPlugins: () => request("/plugins/"),
-  executePluginCommand: (pluginName: string, command: string, args: any = {}) => 
+  executePluginCommand: (pluginName: string, command: string, args: any = {}) =>
     request(`/plugins/${pluginName}/execute`, {
       method: "POST",
       body: JSON.stringify({ command, args })
@@ -166,9 +173,30 @@ export const api = {
   // Library Manager
   listLibraryComponents: () => request("/library/components"),
   listPdkStatus: () => request("/library/pdk"),
-  togglePdk: (pdkName: string, enabled: boolean) => 
+  togglePdk: (pdkName: string, enabled: boolean) =>
     request("/library/pdk/toggle", {
       method: "POST",
       body: JSON.stringify({ pdk_name: pdkName, enabled })
+    }),
+
+  // Files CRUD Extensions
+  renameFile: (fileId: number, newFilename: string) =>
+    request(`/files/${fileId}/rename`, {
+      method: "POST",
+      body: JSON.stringify({ new_filename: newFilename })
+    }),
+  moveFile: (fileId: number, newProjectId: number) =>
+    request(`/files/${fileId}/move`, {
+      method: "POST",
+      body: JSON.stringify({ new_project_id: newProjectId })
+    }),
+  downloadFileUrl: (fileId: number) => `${API_BASE}/files/${fileId}/download`,
+
+  // Settings
+  getSettingsConfig: () => request("/settings/config"),
+  saveSettingsConfig: (config: any) =>
+    request("/settings/config", {
+      method: "POST",
+      body: JSON.stringify(config)
     })
 };

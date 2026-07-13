@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.workspace.database.connection import get_db
-from app.workspace.database.models import User
+from app.workspace.database.models import User, Design
 from app.workspace.database.schemas import DesignResponse, GenerationRequest, DesignIntentResponse
 from app.workspace.services.design_service import design_service
 from app.workspace.services.project_service import project_service
