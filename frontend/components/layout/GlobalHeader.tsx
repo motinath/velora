@@ -25,7 +25,7 @@ export function GlobalHeader({
   return (
     <div className="h-14 border-b border-border flex items-center px-6 justify-between bg-card shrink-0">
       <div className="flex items-center gap-3">
-        <button 
+        <button
           onClick={onToggleSidebar}
           className="p-1.5 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors shrink-0"
           title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
@@ -46,7 +46,7 @@ export function GlobalHeader({
           )}
         </div>
       </div>
-      
+
       <div className="flex items-center gap-3">
         {/* Search and Profile Avatar removed on user request */}
       </div>
