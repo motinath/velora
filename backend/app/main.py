@@ -7,7 +7,7 @@ from app.api.auth.router import router as auth_router
 from app.api.projects.router import router as projects_router
 from app.api.overview.router import router as overview_router
 from app.api.ai_design.router import router as designs_router
-from app.api.rtl.router import router as plugins_router
+from app.api.rtl.router import router as plugins_router, rtl_router
 from app.api.library.router import router as library_router
 from app.api.dashboard.router import router as dashboard_router
 from app.api.schematic.router import router as schematic_router
@@ -135,6 +135,7 @@ app.include_router(projects_router, prefix="/api/v1")
 app.include_router(overview_router, prefix="/api/v1")
 app.include_router(designs_router, prefix="/api/v1")
 app.include_router(plugins_router, prefix="/api/v1")
+app.include_router(rtl_router, prefix="/api/v1")
 app.include_router(library_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(schematic_router, prefix="/api/v1")

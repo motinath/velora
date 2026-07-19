@@ -58,6 +58,7 @@ class SchematicRenderer:
         self,
         graph: CircuitGraph,
         topology_type: Optional[str] = None,
+        custom_layout: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Render the circuit graph to SVG + layout JSON.
@@ -67,6 +68,7 @@ class SchematicRenderer:
         graph         : CircuitGraph built by the connection engine
         topology_type : canonical topology string (e.g. "9T SRAM").
                         Used to look up layout hints from the registry.
+        custom_layout : Optional custom layout coordinates and wires from the editor.
         """
         components = graph.get_components()
         width, height = 800, 500
@@ -74,33 +76,44 @@ class SchematicRenderer:
         wires: List[Dict[str, Any]] = []
 
         # ------------------------------------------------------------------
-        # 1. Load layout from registry
+        # 1. Load layout from registry or use custom layout
         # ------------------------------------------------------------------
-        tpl = None
-        if topology_type:
-            from app.engineering.topology.registry import topology_registry
-            tpl = topology_registry.get(topology_type)
-
-        layout_data = tpl.get("layout", {}) if tpl else {}
-
-        if layout_data and layout_data.get("dynamic_layout"):
-            # --- Dynamic (Ring Oscillator) --------------------------------
-            coords, wires, width, height = self._build_ring_osc_layout(
-                components, layout_data
-            )
-
-        elif layout_data and layout_data.get("component_positions"):
-            # --- Static layout from JSON ----------------------------------
-            canvas   = layout_data.get("canvas", {})
-            width    = canvas.get("width",  800)
-            height   = canvas.get("height", 500)
-            raw_pos  = layout_data.get("component_positions", {})
-            coords   = {cid: (pos["x"], pos["y"]) for cid, pos in raw_pos.items()}
-            wires    = layout_data.get("wires", [])
-
+        if custom_layout:
+            width = custom_layout.get("width", 800)
+            height = custom_layout.get("height", 500)
+            if "nodes" in custom_layout:
+                # handles case where nodes are passed as a list of dicts with x, y
+                coords = {node["id"]: (int(node["x"]), int(node["y"])) for node in custom_layout["nodes"] if "id" in node}
+            elif "component_positions" in custom_layout:
+                raw_pos = custom_layout["component_positions"]
+                coords = {cid: (int(pos["x"]), int(pos["y"])) for cid, pos in raw_pos.items()}
+            wires = custom_layout.get("wires", [])
         else:
-            # --- Auto-placer fallback ------------------------------------
-            coords, wires, width, height = self._auto_place(components, graph.edges)
+            tpl = None
+            if topology_type:
+                from app.engineering.topology.registry import topology_registry
+                tpl = topology_registry.get(topology_type)
+
+            layout_data = tpl.get("layout", {}) if tpl else {}
+
+            if layout_data and layout_data.get("dynamic_layout"):
+                # --- Dynamic (Ring Oscillator) --------------------------------
+                coords, wires, width, height = self._build_ring_osc_layout(
+                    components, layout_data
+                )
+
+            elif layout_data and layout_data.get("component_positions"):
+                # --- Static layout from JSON ----------------------------------
+                canvas   = layout_data.get("canvas", {})
+                width    = canvas.get("width",  800)
+                height   = canvas.get("height", 500)
+                raw_pos  = layout_data.get("component_positions", {})
+                coords   = {cid: (pos["x"], pos["y"]) for cid, pos in raw_pos.items()}
+                wires    = layout_data.get("wires", [])
+
+            else:
+                # --- Auto-placer fallback ------------------------------------
+                coords, wires, width, height = self._auto_place(components, graph.edges)
 
         # Fill in any component not covered by the layout data
         coords = self._fill_missing(components, coords, width, height)

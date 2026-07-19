@@ -198,5 +198,63 @@ export const api = {
     request("/settings/config", {
       method: "POST",
       body: JSON.stringify(config)
-    })
+    }),
+
+  // Interactive Save
+  saveDesign: (designId: number, components: any[], connections: any[], layout: any, vdd: number, optimization: string) =>
+    request(`/designs/${designId}/save`, {
+      method: "POST",
+      body: JSON.stringify({ components, connections, layout, vdd, optimization })
+    }),
+
+  // RTL Workspace
+  listRtlFiles: (projectId: number) => request(`/rtl/files?project_id=${projectId}`),
+  createRtlFile: (projectId: number, filename: string, content: string = "") =>
+    request("/rtl/files/create", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, filename, content })
+    }),
+  saveRtlFile: (fileId: number, content: string) =>
+    request("/rtl/files/save", {
+      method: "POST",
+      body: JSON.stringify({ file_id: fileId, content })
+    }),
+  renameRtlFile: (fileId: number, newFilename: string) =>
+    request("/rtl/files/rename", {
+      method: "POST",
+      body: JSON.stringify({ file_id: fileId, new_filename: newFilename })
+    }),
+  deleteRtlFile: (fileId: number) =>
+    request(`/rtl/files/${fileId}`, {
+      method: "DELETE"
+    }),
+  getWorkspaceState: (projectId: number) => request(`/rtl/workspace?project_id=${projectId}`),
+  saveWorkspaceState: (projectId: number, openTabs: string[], activeTab?: string | null, cursorPosition: number = 0) =>
+    request("/rtl/workspace", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, open_tabs: openTabs, active_tab: activeTab, cursor_position: cursorPosition })
+    }),
+  getRtlOutline: (fileId: number) => request(`/rtl/outline?file_id=${fileId}`),
+  buildRtlProject: (projectId: number) => request(`/rtl/build?project_id=${projectId}`, { method: "POST" }),
+  lintRtlProject: (projectId: number) => request(`/rtl/lint?project_id=${projectId}`, { method: "POST" }),
+  simulateRtlProject: (projectId: number) => request(`/rtl/simulate?project_id=${projectId}`, { method: "POST" }),
+  runRtlAiAction: (projectId: number, fileId: number | null, action: string, prompt: string = "", selectedCode: string = "") =>
+    request("/rtl/ai", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, file_id: fileId, action, prompt, selected_code: selectedCode })
+    }),
+  getRtlGitStatus: (projectId: number) => request(`/rtl/git/status?project_id={projectId}`.replace("{projectId}", projectId.toString())),
+  commitRtlGitChanges: (projectId: number, message: string) =>
+    request("/rtl/git/commit", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, message })
+    }),
+  getRtlMetrics: (projectId: number) => request(`/rtl/metrics?project_id=${projectId}`),
+  runRtlTerminalCommand: (projectId: number, command: string) =>
+    request("/rtl/terminal/run", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, command })
+    }),
+  getRtlHierarchy: (projectId: number) => request(`/rtl/hierarchy?project_id=${projectId}`),
+  getRtlCoverage: (projectId: number) => request(`/rtl/coverage?project_id=${projectId}`)
 };

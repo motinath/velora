@@ -275,3 +275,136 @@ def tune_design(
             status_code=500,
             detail=f"Tuning compiler compilation failed: {str(e)}"
         )
+
+from typing import Dict, Any
+
+class SaveDesignRequest(BaseModel):
+    components: List[Dict[str, Any]]
+    connections: List[Dict[str, Any]]
+    layout: Dict[str, Any]
+    vdd: float
+    optimization: str
+
+@router.post("/{design_id}/save", response_model=DesignResponse)
+def save_design(
+    design_id: int,
+    req_in: SaveDesignRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    design = design_service.get_design(db, design_id)
+    if not design:
+        raise HTTPException(
+            status_code=404,
+            detail="Design record not found."
+        )
+    
+    # Check project ownership
+    project = project_service.get_project(db, design.project_id)
+    if not project or project.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied to this design."
+        )
+        
+    try:
+        # Build plan
+        plan = {
+            "components": req_in.components,
+            "connections": req_in.connections,
+            "layout": req_in.layout,
+            "constraints": design.plan_json.get("constraints", {}) if design.plan_json else {}
+        }
+        
+        # Rebuild circuit graph using ConnectionEngine
+        from app.engineering.graph.connection_engine import connection_engine
+        graph = connection_engine.build_graph(req_in.components, req_in.connections)
+        
+        # Render new schematic SVG and layout using SchematicRenderer, override with custom layout
+        from app.engineering.renderer.schematic_renderer import schematic_renderer
+        schematic = schematic_renderer.render(
+            graph, 
+            topology_type=design.requirements_json.get("type"),
+            custom_layout=req_in.layout
+        )
+        
+        # Generate new SPICE netlist using NetlistGenerator
+        from app.engineering.netlist.netlist_generator import netlist_generator
+        netlist = netlist_generator.generate(graph, design_name=design.requirements_json.get("type", "Generic Subcircuit"))
+        
+        # Run simulation using SimulationManager
+        from app.engineering.simulation.simulation_manager import simulation_manager
+        sim_parameters = dict(design.requirements_json.get("parameters", {}))
+        sim_parameters["vdd"] = req_in.vdd
+        sim_results = simulation_manager.run_simulation(
+            netlist,
+            design.requirements_json.get("type", ""),
+            sim_parameters,
+            req_in.optimization
+        )
+        
+        # Run verification checks using ConstraintChecker
+        from app.engineering.graph.constraint_checker import constraint_checker
+        constraints = plan.get("constraints", [])
+        constraint_results = constraint_checker.check(graph, constraints)
+        
+        # Generate engineering readiness report
+        from app.engineering.verification.analyzer import engineering_analyzer
+        readiness_report = engineering_analyzer.generate_readiness_report(
+            graph=graph,
+            constraint_results=constraint_results,
+            sim_results=sim_results,
+            topology_type=design.requirements_json.get("type", ""),
+            optimization=req_in.optimization,
+            vdd=req_in.vdd
+        )
+        
+        # Save as a NEW checkpoint/version of the design!
+        from sqlalchemy import func
+        max_ver = (
+            db.query(func.max(Design.version))
+            .filter(Design.project_id == design.project_id)
+            .scalar()
+            or 0
+        )
+        
+        # Update requirements_json with new parameters
+        reqs = dict(design.requirements_json or {})
+        if "parameters" not in reqs:
+            reqs["parameters"] = {}
+        reqs["parameters"]["vdd"] = req_in.vdd
+        reqs["optimization"] = req_in.optimization
+        
+        design_data = {
+            "project_id":             design.project_id,
+            "prompt":                 f"Custom schematic edit checkpoint (based on v{design.version})",
+            "requirements_json":      reqs,
+            "plan_json":              plan,
+            "circuit_graph_json":     graph.to_json(),
+            "constraint_results_json":constraint_results,
+            "schematic_svg":          schematic.get("svg", ""),
+            "schematic_json":         schematic.get("layout", {}),
+            "netlist_content":        netlist,
+            "simulation_results_json":sim_results,
+            "explanation_markdown":   design.explanation_markdown,
+            "logs_content":           f"[VELORA SYSTEM] Custom schematic modifications saved.\n[VELORA SYSTEM] Re-simulated Ngspice transient analysis.\n[VELORA SYSTEM] Verification checks successfully recalculated.",
+            "version":                max_ver + 1,
+            "readiness_report_json":  readiness_report,
+        }
+        
+        new_design = design_service.design_repository.create(db, design_data)
+        
+        # Sync files to workspace state engine
+        from app.workspace.services.state_manager import state_manager
+        state_manager.sync_files_to_state(db, new_design)
+        
+        db.commit()
+        db.refresh(new_design)
+        return new_design
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Saving custom design edits failed: {str(e)}"
+        )
