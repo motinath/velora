@@ -158,3 +158,86 @@ class LibraryComponent(Base):
     ai_metadata = Column(JSON, nullable=True)
     design_constraints = Column(JSON, nullable=True)
     documentation = Column(JSON, nullable=True)
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id = Column(String, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    job_type = Column(String, nullable=False)  # 'compile', 'simulate', 'verify', 'ai'
+    status = Column(String, nullable=False, default="pending")  # 'pending', 'running', 'success', 'failed'
+    logs = Column(Text, nullable=True)
+    parameters = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+
+    project = relationship("Project")
+
+class WorkspaceState(Base):
+    __tablename__ = "workspace_states"
+
+    project_id = Column(Integer, ForeignKey("projects.id"), primary_key=True)
+    open_tabs = Column(JSON, nullable=True)  # List of filenames
+    active_tab = Column(String, nullable=True)
+    pinned_files = Column(JSON, nullable=True)
+    cursor_line = Column(Integer, default=1)
+    cursor_column = Column(Integer, default=1)
+    scroll_top = Column(Integer, default=0)
+    zoom_level = Column(Integer, default=100)
+
+    project = relationship("Project")
+
+class DesignCache(Base):
+    __tablename__ = "design_caches"
+
+    id = Column(Integer, primary_key=True, index=True)
+    prompt_hash = Column(String, unique=True, index=True, nullable=False)
+    requirements_json = Column(JSON, nullable=True)
+    plan_json = Column(JSON, nullable=True)
+    circuit_graph_json = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class Artifact(Base):
+    __tablename__ = "artifacts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    name = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    artifact_type = Column(String, nullable=False)  # 'rtl', 'netlist', 'gds', 'report', 'waveform', 'log'
+    mime_type = Column(String, nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    version = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    project = relationship("Project")
+
+class DesignRevision(Base):
+    __tablename__ = "design_revisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    design_id = Column(Integer, ForeignKey("designs.id"), nullable=False)
+    revision_number = Column(Integer, nullable=False)
+    circuit_graph_json = Column(JSON, nullable=True)
+    schematic_json = Column(JSON, nullable=True)
+    netlist_content = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    project = relationship("Project")
+    design = relationship("Design")
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(String, nullable=False)
+    details = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+    project = relationship("Project")
+    user = relationship("User")
+

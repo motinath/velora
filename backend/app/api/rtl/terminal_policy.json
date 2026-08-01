@@ -1,0 +1,13 @@
+{
+  "allowed": [
+    "iverilog",
+    "yosys",
+    "verilator",
+    "git",
+    "python",
+    "ngspice",
+    "ls",
+    "grep",
+    "cd"
+  ]
+}

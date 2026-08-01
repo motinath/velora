@@ -397,13 +397,20 @@ export function RTLView() {
 
       // Restore workspace session state
       const savedState = await api.getWorkspaceState(projectId);
-      if (savedState && savedState.open_tabs && savedState.open_tabs.length > 0) {
-        setOpenTabs(savedState.open_tabs);
-        const tabExists = fileList.some((f: any) => f.filename === savedState.active_tab);
-        if (tabExists) {
-          await handleSelectTab(savedState.active_tab, fileList);
+      if (savedState) {
+        if (savedState.open_tabs && savedState.open_tabs.length > 0) {
+          setOpenTabs(savedState.open_tabs);
+          const tabExists = fileList.some((f: any) => f.filename === savedState.active_tab);
+          if (tabExists) {
+            await handleSelectTab(savedState.active_tab, fileList);
+          } else {
+            await handleSelectTab(fileList[0]?.filename || null, fileList);
+          }
         } else {
           await handleSelectTab(fileList[0]?.filename || null, fileList);
+        }
+        if (savedState.pinned_files) {
+          setPinnedFiles(savedState.pinned_files);
         }
       } else {
         await handleSelectTab(fileList[0]?.filename || null, fileList);
@@ -527,7 +534,7 @@ export function RTLView() {
 
   // 5. File Deletion
   const handleDeleteFile = async (fileId: number, filename: string) => {
-    if (!confirm(`Are you sure you want to permanently delete file: ${filename}?`)) return;
+    if (!(await confirm(`Are you sure you want to permanently delete file: ${filename}?`))) return;
     try {
       await api.deleteRtlFile(fileId);
       setFiles(prev => prev.filter(f => f.id !== fileId));
@@ -554,7 +561,7 @@ export function RTLView() {
 
   // 6. File Renaming
   const handleRenameFile = async (fileId: number, currentName: string) => {
-    const newName = prompt("Enter new path or filename:", currentName);
+    const newName = await prompt("Enter new path or filename:", currentName);
     if (!newName || newName.trim() === currentName) return;
     try {
       await api.renameRtlFile(fileId, newName.trim());
@@ -984,8 +991,8 @@ export function RTLView() {
             <button
               onClick={() => handleActivityBarClick("explorer")}
               className={`w-full py-3.5 relative flex items-center justify-center transition-all ${activeActivityBarTab === "explorer" && sidebarOpen
-                  ? "text-white"
-                  : "text-[#858585] hover:text-[#e1e1e1]"
+                ? "text-white"
+                : "text-[#858585] hover:text-[#e1e1e1]"
                 }`}
               title="Explorer"
             >
@@ -999,8 +1006,8 @@ export function RTLView() {
             <button
               onClick={() => handleActivityBarClick("git")}
               className={`w-full py-3.5 relative flex items-center justify-center transition-all ${activeActivityBarTab === "git" && sidebarOpen
-                  ? "text-white"
-                  : "text-[#858585] hover:text-[#e1e1e1]"
+                ? "text-white"
+                : "text-[#858585] hover:text-[#e1e1e1]"
                 }`}
               title="Source Control (Git)"
             >
@@ -1014,8 +1021,8 @@ export function RTLView() {
             <button
               onClick={() => handleActivityBarClick("ai")}
               className={`w-full py-3.5 relative flex items-center justify-center transition-all ${activeActivityBarTab === "ai" && sidebarOpen
-                  ? "text-white"
-                  : "text-[#858585] hover:text-[#e1e1e1]"
+                ? "text-white"
+                : "text-[#858585] hover:text-[#e1e1e1]"
                 }`}
               title="AI Assistant (Copilot)"
             >
@@ -1029,8 +1036,8 @@ export function RTLView() {
             <button
               onClick={() => handleActivityBarClick("metrics")}
               className={`w-full py-3.5 relative flex items-center justify-center transition-all ${activeActivityBarTab === "metrics" && sidebarOpen
-                  ? "text-white"
-                  : "text-[#858585] hover:text-[#e1e1e1]"
+                ? "text-white"
+                : "text-[#858585] hover:text-[#e1e1e1]"
                 }`}
               title="Design Metrics"
             >
@@ -1516,8 +1523,8 @@ export function RTLView() {
                       borderLeft: "1px solid transparent"
                     }}
                     className={`px-3.5 h-full cursor-pointer flex items-center gap-2 transition shrink-0 select-none ${isActive
-                        ? "bg-[#ffffff] text-[#333333] font-bold"
-                        : "bg-[#ececec] text-[#6f6f6f] hover:bg-[#e4e4e7] hover:text-[#333333]"
+                      ? "bg-[#ffffff] text-[#333333] font-bold"
+                      : "bg-[#ececec] text-[#6f6f6f] hover:bg-[#e4e4e7] hover:text-[#333333]"
                       }`}
                   >
                     <FileCode className={`w-3.5 h-3.5 ${isActive ? "text-[#007acc]" : "text-slate-400"}`} />
@@ -1624,8 +1631,8 @@ export function RTLView() {
                     key={tab.id}
                     onClick={() => setActiveLogTab(tab.id as any)}
                     className={`pb-1.5 transition-all relative font-bold ${activeLogTab === tab.id
-                        ? "text-[#007acc] border-b-2 border-[#007acc] font-black"
-                        : "hover:text-slate-800 text-slate-505"
+                      ? "text-[#007acc] border-b-2 border-[#007acc] font-black"
+                      : "hover:text-slate-800 text-slate-505"
                       }`}
                   >
                     {tab.label}
@@ -1839,8 +1846,8 @@ export function RTLView() {
                   <div key={idx} className="flex justify-between items-center">
                     <span>{step.name}</span>
                     <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${step.status === "success" ? "text-emerald-700 bg-emerald-50" :
-                        step.status === "loading" ? "text-blue-700 bg-blue-50 animate-pulse" :
-                          step.status === "failed" ? "text-red-700 bg-red-50" : "text-slate-400 bg-slate-100"
+                      step.status === "loading" ? "text-blue-700 bg-blue-50 animate-pulse" :
+                        step.status === "failed" ? "text-red-700 bg-red-50" : "text-slate-400 bg-slate-100"
                       }`}>
                       {step.status.toUpperCase()}
                     </span>
@@ -1861,8 +1868,8 @@ export function RTLView() {
                   key={t.id}
                   onClick={() => setRightPanelTab(t.id as any)}
                   className={`px-2.5 font-bold pb-1.5 border-b-2 transition shrink-0 ${rightPanelTab === t.id
-                      ? "text-[#007acc] border-[#007acc] font-black"
-                      : "border-transparent hover:text-slate-800"
+                    ? "text-[#007acc] border-[#007acc] font-black"
+                    : "border-transparent hover:text-slate-800"
                     }`}
                 >
                   {t.label}

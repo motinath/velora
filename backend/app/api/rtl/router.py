@@ -352,6 +352,36 @@ def list_rtl_files(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if project_id == -1:
+        import datetime
+        return [
+            {
+                "id": -1,
+                "project_id": -1,
+                "filename": "rtl/sram_bitcell.sv",
+                "type": "rtl",
+                "path": "storage/projects/-1/rtl/sram_bitcell.sv",
+                "content": """// 6T SRAM Bitcell logic wrapper
+module sram_bitcell (
+    input  logic wl,
+    inout  logic bl,
+    inout  logic blb,
+    input  logic vdd,
+    input  logic gnd
+);
+    logic q;
+    logic qb;
+    assign q = (wl && bl) ? 1'b1 : ((wl && blb) ? 1'b0 : q);
+    assign qb = ~q;
+    assign bl = (wl && !blb) ? q : 1'bz;
+    assign blb = (wl && !bl) ? qb : 1'bz;
+endmodule""",
+                "version": 1,
+                "size": 350,
+                "created_at": datetime.datetime.utcnow()
+            }
+        ]
+
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project or project.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -547,25 +577,25 @@ def get_workspace_state(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if project_id == -1:
+        return {
+            "project_id": -1,
+            "open_tabs": [],
+            "active_tab": None,
+            "pinned_files": [],
+            "cursor_line": 1,
+            "cursor_column": 1,
+            "scroll_top": 0,
+            "zoom_level": 100
+        }
+
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project or project.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    workspace_path = f"storage/projects/{project_id}/workspace_state.json"
-    if os.path.exists(workspace_path):
-        try:
-            with open(workspace_path, "r") as f:
-                return json.load(f)
-        except Exception:
-            pass
-
-    # Default State
-    return {
-        "project_id": project_id,
-        "open_tabs": [],
-        "active_tab": None,
-        "cursor_position": 0
-    }
+    from app.workspace.di_container import di
+    manager = di.resolve("workspace_manager")
+    return manager.get_state(project_id, db)
 
 @rtl_router.post("/workspace")
 def save_workspace_state(
@@ -573,25 +603,36 @@ def save_workspace_state(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if req.project_id == -1:
+        return {"status": "success"}
+
     project = db.query(Project).filter(Project.id == req.project_id).first()
     if not project or project.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    proj_dir = f"storage/projects/{req.project_id}"
-    os.makedirs(proj_dir, exist_ok=True)
-    workspace_path = f"{proj_dir}/workspace_state.json"
+    from app.workspace.di_container import di
+    manager = di.resolve("workspace_manager")
+    
+    pinned = getattr(req, "pinned_files", []) or []
+    c_line = getattr(req, "cursor_line", 1) or 1
+    c_col = getattr(req, "cursor_column", 1) or 1
+    s_top = getattr(req, "scroll_top", 0) or 0
+    zoom = getattr(req, "zoom_level", 100) or 100
 
-    state_data = {
-        "project_id": req.project_id,
-        "open_tabs": req.open_tabs,
-        "active_tab": req.active_tab,
-        "cursor_position": req.cursor_position
-    }
-
-    with open(workspace_path, "w") as f:
-        json.dump(state_data, f)
+    manager.save_state(
+        project_id=req.project_id,
+        open_tabs=req.open_tabs,
+        active_tab=req.active_tab,
+        pinned_files=pinned,
+        cursor_line=c_line,
+        cursor_column=c_col,
+        scroll_top=s_top,
+        zoom_level=zoom,
+        db=db
+    )
 
     return {"status": "success"}
+
 
 
 # 7. Outline, Signals, and Parameters Extractor Parser
@@ -1268,12 +1309,38 @@ def run_terminal_command(
     if not cmd:
         return {"output": "", "code": 0}
 
-    # Restrict command execution to standard safe workspace operations
-    # Simple shell execution within the project directory
+    import shlex
+    from app.workspace.di_container import di
+
     try:
+        tokens = shlex.split(cmd)
+        if not tokens:
+            return {"output": "", "code": 0}
+
+        binary = tokens[0]
+
+        # Resolve configuration-driven terminal policy
+        config_manager = di.resolve("config_manager")
+        policy = config_manager.get_config("terminal_policy")
+        allowed_binaries = policy.get("allowed", [])
+
+        if binary not in allowed_binaries:
+            return {
+                "output": f"Security Error: Executable '{binary}' is not permitted by terminal policy.",
+                "code": -1
+            }
+
+        # Safe constraint check: Git operations require user authorization
+        if binary == "git":
+            return {
+                "output": "Security Error: Execution of 'git' commands via terminal is blocked. Manual authorization is required.",
+                "code": -1
+            }
+
+        # Run safely without shell=True
         res = subprocess.run(
-            cmd,
-            shell=True,
+            tokens,
+            shell=False,
             cwd=proj_dir,
             capture_output=True,
             text=True,
@@ -1298,6 +1365,7 @@ def run_terminal_command(
             "output": f"Execution Error: {str(e)}",
             "code": -1
         }
+
 
 
 # 16. Get Project Module Hierarchy and Package Dependencies

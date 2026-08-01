@@ -35,17 +35,34 @@ def create_access_token(subject: Union[str, Any]) -> str:
     return encoded_jwt
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
-    if token:
+    if settings.AUTH_ENABLED:
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated. Access token missing."
+            )
         try:
             payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
             user_id: str = payload.get("sub")
-            if user_id:
-                user = db.query(User).filter(User.id == int(user_id)).first()
-                if user:
-                    return user
+            if not user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid token payload."
+                )
+            user = db.query(User).filter(User.id == int(user_id)).first()
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found."
+                )
+            return user
         except jwt.PyJWTError:
-            pass
-
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token signature or expired."
+            )
+            
+    # If AUTH_ENABLED is False, bypass login and return the default dev user
     user = db.query(User).filter(User.id == 1).first()
     if user is None:
         user = User(
@@ -55,7 +72,4 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         db.add(user)
         db.commit()
         db.refresh(user)
-
-        # No default projects seeded on creation. The workspace starts completely clean.
-        pass
     return user

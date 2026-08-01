@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "storage"
     MODEL_PROVIDER: str = "mock"  # 'mock', 'openai', 'anthropic', 'gemini', 'deepseek'
     MODEL_NAME: str = "mock-model"
+    
+    AUTH_ENABLED: bool = False
+
 
 # Ensure storage directory exists
 settings = Settings()

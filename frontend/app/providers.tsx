@@ -640,7 +640,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   };
 
   const handleDeleteProject = async (id: number) => {
-    if (confirm("Are you sure you want to delete this project?")) {
+    if (await confirm("Are you sure you want to delete this project?")) {
       try {
         await api.deleteProject(id);
         const updated = projects.filter((p) => p.id !== id);
@@ -710,7 +710,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
   const handleRollback = async (version: number) => {
     if (!selectedProjectId) return;
-    if (confirm(`Are you sure you want to rollback to version ${version}?`)) {
+    if (await confirm(`Are you sure you want to rollback to version ${version}?`)) {
       try {
         setGenerating(true);
         const rolledBackDesign = await api.rollbackDesign(selectedProjectId, version);
@@ -1190,6 +1190,91 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    // Custom global Alert, Confirm, Prompt overrides (avoiding "localhost says:")
+    (window as any).alert = (message?: string) => {
+      const container = document.createElement("div");
+      container.className = "fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm transition-all duration-300 font-sans";
+      container.innerHTML = `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform scale-100 transition-all">
+          <div class="flex items-center gap-2.5 text-cyan-600 dark:text-cyan-400 mb-3">
+            <span class="text-xs font-black uppercase tracking-widest">Notification</span>
+          </div>
+          <p class="text-xs font-semibold leading-relaxed text-slate-655 dark:text-slate-300 mb-6">${message || ""}</p>
+          <div class="flex justify-end">
+            <button class="bg-[#007acc] hover:bg-[#006bb8] text-white font-bold text-xs px-5 py-2.5 rounded-lg transition shadow-sm">OK</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(container);
+      const btn = container.querySelector("button")!;
+      btn.onclick = () => container.remove();
+    };
+
+    (window as any).confirm = (message?: string) => {
+      return new Promise<boolean>((resolve) => {
+        const container = document.createElement("div");
+        container.className = "fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm transition-all duration-300 font-sans";
+        container.innerHTML = `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform scale-100 transition-all">
+            <div class="flex items-center gap-2.5 text-amber-600 dark:text-amber-500 mb-3">
+              <span class="text-xs font-black uppercase tracking-widest">Confirmation</span>
+            </div>
+            <p class="text-xs font-semibold leading-relaxed text-slate-655 dark:text-slate-300 mb-6">${message || ""}</p>
+            <div class="flex justify-end gap-3">
+              <button id="cancel-btn" class="border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-350 font-bold text-xs px-5 py-2.5 rounded-lg transition">Cancel</button>
+              <button id="ok-btn" class="bg-[#007acc] hover:bg-[#006bb8] text-white font-bold text-xs px-5 py-2.5 rounded-lg transition shadow-sm">Confirm</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(container);
+        const cancelBtn = container.querySelector("#cancel-btn") as HTMLButtonElement;
+        const okBtn = container.querySelector("#ok-btn") as HTMLButtonElement;
+        cancelBtn.onclick = () => {
+          container.remove();
+          resolve(false);
+        };
+        okBtn.onclick = () => {
+          container.remove();
+          resolve(true);
+        };
+      }) as any;
+    };
+
+    (window as any).prompt = (message?: string, defaultVal: string = "") => {
+      return new Promise<string | null>((resolve) => {
+        const container = document.createElement("div");
+        container.className = "fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm transition-all duration-300 font-sans";
+        container.innerHTML = `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform scale-100 transition-all">
+            <div class="flex items-center gap-2.5 text-cyan-600 dark:text-cyan-400 mb-3">
+              <span class="text-xs font-black uppercase tracking-widest">Input Required</span>
+            </div>
+            <p class="text-xs font-semibold leading-relaxed text-slate-655 dark:text-slate-300 mb-3">${message || ""}</p>
+            <input type="text" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs p-2.5 rounded-lg mb-6 outline-none focus:border-[#007acc] text-slate-800 dark:text-slate-200" value="${defaultVal || ''}" />
+            <div class="flex justify-end gap-3">
+              <button id="cancel-btn" class="border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-350 font-bold text-xs px-5 py-2.5 rounded-lg transition">Cancel</button>
+              <button id="ok-btn" class="bg-[#007acc] hover:bg-[#006bb8] text-white font-bold text-xs px-5 py-2.5 rounded-lg transition shadow-sm">Submit</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(container);
+        const input = container.querySelector("input") as HTMLInputElement;
+        const cancelBtn = container.querySelector("#cancel-btn") as HTMLButtonElement;
+        const okBtn = container.querySelector("#ok-btn") as HTMLButtonElement;
+        
+        setTimeout(() => input.focus(), 50);
+
+        cancelBtn.onclick = () => {
+          container.remove();
+          resolve(null);
+        };
+        okBtn.onclick = () => {
+          container.remove();
+          resolve(input.value);
+        };
+      }) as any;
+    };
+
     setIsLoggedIn(true);
     loadProjects();
     loadLibraryData();
